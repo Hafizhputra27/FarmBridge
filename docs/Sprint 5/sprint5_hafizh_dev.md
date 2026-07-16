@@ -8,8 +8,8 @@
 ## Task Checklist
 
 ### FG-20 — GET /trust-metrics/:id + GET /buyer-metrics/:id
-- [ ] `GET /trust-metrics/:farmer_id` → `{ on_time_delivery_rate, rejection_rate, fulfillment_consistency, total_transactions, window_days }`; 404 jika farmer_id tidak ditemukan
-- [ ] `GET /buyer-metrics/:buyer_id` → `{ total_procurement, active_orders_count, fulfillment_rate, avg_monthly_volume, window_days }`; 404 jika buyer_profiles tidak ditemukan; field 0/null jika belum ada transaksi (bukan error)
+- [x] `GET /trust-metrics/:farmer_id` → `{ on_time_delivery_rate, rejection_rate, fulfillment_consistency, total_transactions, window_days }`; 404 jika farmer_id tidak ditemukan — diverifikasi 3 skenario (data ada, 404, 0/null); bug ID-space (`:farmer_id` = `users.id`, bukan `farmer_profiles.id`) ditemukan & diperbaiki saat testing
+- [x] `GET /buyer-metrics/:buyer_id` → `{ total_procurement, active_orders_count, fulfillment_rate, avg_monthly_volume, window_days }`; 404 jika buyer_profiles tidak ditemukan; field 0/null jika belum ada transaksi (bukan error) — diverifikasi 2 skenario (404, 0/null)
 
 ## File/folder yang kamu sentuh
 ```
@@ -25,8 +25,8 @@ supabase/functions/buyer-metrics/**
 Kalau FG-20 selesai lebih cepat, mulai baca ulang desain Farmer/Buyer Public Profile (Figma) dan siapkan wireframe kasar untuk FG-16 (Sprint 6) — supaya begitu sprint depan mulai kamu tinggal eksekusi.
 
 ## Definition of Done
-- [ ] `GET /trust-metrics/:id` & `GET /buyer-metrics/:id` mengembalikan response sesuai skema, 404 untuk id tidak ditemukan — **cara cek**: test request/response lewat Postman/curl untuk kedua endpoint
-- [ ] Farmer/buyer tanpa transaksi apapun → field 0/null, bukan error
+- [x] `GET /trust-metrics/:id` & `GET /buyer-metrics/:id` mengembalikan response sesuai skema, 404 untuk id tidak ditemukan — **cara cek**: test request/response lewat curl untuk kedua endpoint — dilakukan, semua skenario cocok
+- [x] Farmer/buyer tanpa transaksi apapun → field 0/null, bukan error — diverifikasi via curl langsung
 
 ## Referensi PRD
 §2.3, §2.4, §9, §12 (Data Integrity).
