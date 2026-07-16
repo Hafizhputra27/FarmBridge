@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/role_picker_screen.dart';
 import '../../features/auth/screens/name_input_screen.dart';
+import '../../features/listing/screens/my_listings_screen.dart';
+import '../../features/listing/screens/create_listing_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -69,6 +71,25 @@ final farmerRoutes = <RouteBase>[
     path: '/farmer',
     builder: (context, state) =>
         const PlaceholderScreen(title: 'Farmer Home'),
+    routes: [
+      GoRoute(
+        path: 'listings',
+        builder: (context, state) => const MyListingsScreen(),
+        routes: [
+          GoRoute(
+            path: 'create',
+            builder: (context, state) => const CreateListingScreen(),
+          ),
+          GoRoute(
+            path: ':id/edit',
+            builder: (context, state) {
+              final listing = state.extra as Map<String, dynamic>;
+              return CreateListingScreen(listing: listing);
+            },
+          ),
+        ],
+      ),
+    ],
   ),
 ];
 
