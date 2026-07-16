@@ -673,7 +673,7 @@ Kalau merah: baca log step yang gagal (biasanya `SUPABASE_ACCESS_TOKEN` salah/ex
 
 *(Isi setelah disepakati — jangan biarkan kosong sebelum Nevan commit FG-2)*
 
-- **`device_token` location:** _(belum disepakati dengan Nevan — masih blocking, isi setelah Task 1 Step 2 selesai)_
+- **`device_token` location:** Terverifikasi 2026-07-16 lewat migration Nevan (`origin/nevan_dev`, `supabase/migrations/20260716080000_initial_schema.sql`): `device_token text NULL` langsung di tabel `users`, persis sesuai proposal — cocok dengan `fcm_service.dart` tanpa perlu penyesuaian nama kolom.
 - **Firebase project ID final:** `farmbridge-d7fe8` (dibuat manual oleh Hafizh 2026-07-16, `farmbridge-hackathon` sudah dipakai)
 
 ---

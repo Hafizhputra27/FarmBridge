@@ -36,7 +36,29 @@ Kedua ticket (FG-5, FG-6) selesai dari sisi kode dan infrastruktur, dan **FG-6 s
 
 **Temuan penting — emulator tanpa akun Google tidak reliable untuk test FCM:** Percobaan pertama di emulator gagal menampilkan notifikasi walau FCM API mengembalikan `{"ok":true}` dan client SDK terbukti menerima pesan (log `FirebaseMessaging`/`FLTFireMsgReceiver` aktif). Root cause: `adb shell dumpsys account` menunjukkan **tidak ada Google account** ter-sign-in di emulator — Play Services tidak bisa registrasi penuh ke channel push Google walau `getToken()` tetap mengembalikan token yang terlihat valid. Setelah pindah ke HP fisik (yang sudah sign-in Google account), notifikasi langsung muncul dengan payload identik. **Pelajaran untuk sprint berikutnya:** kalau butuh test FCM di emulator, pastikan emulator pakai image "Google Play" dan sudah sign-in akun Google dulu — kalau tidak, uji langsung di device fisik.
 
-**Belum selesai:** `_saveDeviceToken()` di `FcmService` sudah benar secara kode, tapi kolom `users.device_token` belum ada di database — menunggu Nevan commit migration FG-2 (Task 1 di `sprint1_hafizh_dev_plan.md`, masih blocking).
+**Belum selesai:** kolom `users.device_token` sudah ada di migration Nevan (`origin/nevan_dev`, belum di-merge ke `hafizh_dev`) — begitu di-merge dan `supabase db push --dry-run` hijau, `_saveDeviceToken()` di `FcmService` langsung bisa jalan tanpa perubahan kode lagi.
+
+## Proposal `device_token` untuk Nevan (Task 1 — menunggu konfirmasi)
+
+Belum dikonfirmasi ke Nevan per 2026-07-16. Yang perlu disepakati sebelum dia commit migration FG-2:
+
+1. **Lokasi:** kolom langsung di tabel `users` — bukan tabel terpisah (`device_tokens`)
+2. **Nama kolom:** persis `device_token` — sudah di-hardcode di `lib/core/services/fcm_service.dart`:
+   ```dart
+   await Supabase.instance.client
+       .from('users')
+       .update({'device_token': token}).eq('id', userId);
+   ```
+   Kalau Nevan pakai nama lain (mis. `fcm_token`), file ini harus disesuaikan dulu sebelum device_token wiring bisa jalan (lihat Task 9 Step 3 di `sprint1_hafizh_dev_plan.md`).
+3. **Tipe:** `text`, nullable — bukan `NOT NULL`, karena user baru register belum tentu langsung punya token.
+
+Alasan satu kolom nullable (bukan tabel terpisah): satu user = satu device token aktif cukup untuk kebutuhan MVP (push reminder recurring order + update negosiasi) — tabel many-to-many tidak dibutuhkan untuk scope hackathon ini (YAGNI).
+
+Draft pesan yang dipakai untuk konfirmasi ke Nevan:
+
+> "Untuk FG-6 (push notification), tolong tambahin kolom `device_token text null` langsung di tabel `users` waktu nulis migration FG-2 — nullable karena user baru belum tentu punya token. Satu kolom aja cukup, gak perlu tabel terpisah, karena satu user cuma butuh satu device token aktif buat MVP ini. Oke?"
+
+**Status 2026-07-16: terverifikasi lewat kode.** Migration Nevan di `origin/nevan_dev` (`supabase/migrations/20260716080000_initial_schema.sql`) berisi persis `device_token text NULL` di tabel `users` — cocok 1:1 dengan proposal di atas dan dengan `fcm_service.dart`. Tidak perlu penyesuaian nama kolom (Task 9 Step 3 aman).
 
 ## File yang dibuat/diubah (belum di-commit)
 
@@ -60,11 +82,11 @@ Draft urutan commit ada di riwayat percakapan sesi ini — belum dijalankan (ses
 
 ## Yang masih pending sebelum merge ke `main`
 
-1. **Task 1 (blocking):** konfirmasi tertulis dari Nevan soal kolom `users.device_token` — belum terjadi, harus sebelum Nevan commit FG-2
-2. **Commit** semua perubahan di atas (manual, Hafizh)
-3. **Merge `nevan_dev` → `hafizh_dev`**, lalu `supabase db push --dry-run` (wajib hijau — ini yang memunculkan kolom `device_token`)
+1. ~~Task 1 (blocking): konfirmasi device_token dengan Nevan~~ — **selesai, terverifikasi lewat migration `origin/nevan_dev`**
+2. ~~Commit semua perubahan~~ — **selesai** (7 commit di `hafizh_dev`, lihat `git log`)
+3. **Merge `nevan_dev` → `hafizh_dev`**, lalu `supabase db push --dry-run` (wajib hijau)
 4. **Merge `fachri_dev` → `hafizh_dev`** (setelah Nevan aman, risiko konflik rendah karena FG-57 tidak menyentuh migration)
-5. Task 9 Step 3: pastikan nama kolom di `fcm_service.dart` cocok persis dengan migration Nevan
+5. ~~Task 9 Step 3: cek nama kolom~~ — **sudah dicek dari migration, cocok, tidak perlu perubahan kode**
 6. Push `hafizh_dev` → merge ke `main` → verifikasi Actions run hijau (DoD FG-5 & FG-6 sisanya)
 
 ## Catatan keamanan
