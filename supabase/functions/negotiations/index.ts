@@ -132,6 +132,16 @@ Deno.serve(async (req: Request) => {
   const { action, negotiationId } = parsePath(pathname);
 
   try {
+    // Path tanpa ID + POST → create. Dicek sebelum `action === "list"`
+    // karena parsePath() memberi action yang sama ("list") untuk path ini
+    // terlepas dari method — kalau dicek belakangan, POST /negotiations
+    // selalu 405 duluan di blok "list" dan handleCreate jadi tidak
+    // pernah tercapai.
+    if ((pathname === "/negotiations" || pathname === "/negotiations/") && req.method === "POST") {
+      const body = await req.json();
+      return await handleCreate(supabase, body);
+    }
+
     if (action === "list") {
       if (req.method !== "GET") return new Response("Method not allowed", { status: 405 });
       const userId = await getUserId(req, supabase);
@@ -150,13 +160,6 @@ Deno.serve(async (req: Request) => {
       if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
       const body = await req.json();
       return await handleMessages(supabase, negotiationId!, body);
-    }
-
-    // No negotiation ID → create
-    if (pathname === "/negotiations" || pathname === "/negotiations/") {
-      if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
-      const body = await req.json();
-      return await handleCreate(supabase, body);
     }
 
     return new Response(JSON.stringify({ error: "Route not found" }), { status: 404, headers: { "Content-Type": "application/json" } });
