@@ -12,6 +12,7 @@ import '../../features/listing/screens/buyer_home_feed_screen.dart';
 import '../../features/listing/screens/search_filter_screen.dart';
 import '../../features/negotiation/screens/negotiation_chat_screen.dart';
 import '../../features/negotiation/screens/chat_inbox_screen.dart';
+import '../widgets/main_shell.dart';
 
 // Pure — diextract dari redirect callback supaya bisa diunit-test tanpa
 // device/emulator (lihat test/app_router_redirect_test.dart).
@@ -64,32 +65,35 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       ShellRoute(
-        builder: (context, state, child) => child,
+        builder: (context, state, child) =>
+            MainShell(location: state.matchedLocation, child: child),
         routes: [
           ...buyerRoutes,
           ...farmerRoutes,
+          GoRoute(
+            path: '/farmer-profile/:id',
+            builder: (context, state) =>
+                FarmerProfileScreen(farmerId: state.pathParameters['id']!),
+          ),
+          GoRoute(
+            path: '/buyer-profile/:id',
+            builder: (context, state) =>
+                BuyerProfileScreen(buyerId: state.pathParameters['id']!),
+          ),
+          GoRoute(
+            path: '/percakapan',
+            builder: (context, state) => const ChatInboxScreen(),
+          ),
         ],
       ),
-      GoRoute(
-        path: '/farmer-profile/:id',
-        builder: (context, state) =>
-            FarmerProfileScreen(farmerId: state.pathParameters['id']!),
-      ),
-      GoRoute(
-        path: '/buyer-profile/:id',
-        builder: (context, state) =>
-            BuyerProfileScreen(buyerId: state.pathParameters['id']!),
-      ),
+      // Full-screen, sengaja di luar shell — chat detail tidak butuh
+      // bottom nav bar persisten.
       GoRoute(
         path: '/negosiasi/:id',
         builder: (context, state) {
           final id = state.pathParameters['id']!;
           return NegotiationChatScreen(negotiationId: id);
         },
-      ),
-      GoRoute(
-        path: '/percakapan',
-        builder: (context, state) => const ChatInboxScreen(),
       ),
     ],
   );
