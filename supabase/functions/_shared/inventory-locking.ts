@@ -69,6 +69,9 @@ export async function lockInventoryOnAcceptWithQuantity(
 
   // 3. Buat transaction PENDING
   const totalAmount = quantity * Number(neg.current_offer_price);
+  // Konvensi sama dengan buy-now/index.ts:11 — H+7 dari tanggal accept.
+  const promised = new Date();
+  promised.setDate(promised.getDate() + 7);
   const { data: tx, error: txErr } = await supabase
     .from("transactions")
     .insert({
@@ -78,7 +81,7 @@ export async function lockInventoryOnAcceptWithQuantity(
       status: "pending",
       agreed_quantity: quantity,
       total_amount: totalAmount,
-      promised_delivery_date: null,
+      promised_delivery_date: promised.toISOString().slice(0, 10),
     })
     .select("id")
     .single();
