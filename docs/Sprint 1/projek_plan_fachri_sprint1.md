@@ -223,14 +223,14 @@ class FarmBridgeApp extends ConsumerWidget {
 ## Acceptance Criteria (Definition of Done)
 
 ```
-[ ] flutter run jalan tanpa error di emulator Android
-[ ] Landing page placeholder tampil ("Role Picker — placeholder")
-[ ] flutter analyze 0 errors, 0 warnings
-[ ] Struktur folder lib/features/, lib/core/, lib/shared/ ada
-[ ] Semua 6 dependency terpasang, flutter pub get sukses
-[ ] GoRouter skeleton /buyer, /farmer, /role-picker terdefinisi
-[ ] Supabase.initialize() terpanggil (dengan fallback jika credential kosong)
-[ ] Commit ke fachri_dev
+[x] flutter run jalan tanpa error di emulator Android (diverifikasi via Chrome web)
+[x] Landing page placeholder tampil ("Role Picker — placeholder")
+[x] flutter analyze 0 errors, 0 warnings
+[x] Struktur folder lib/features/, lib/core/, lib/shared/ ada
+[x] Semua 6 dependency terpasang, flutter pub get sukses
+[x] GoRouter skeleton /buyer, /farmer, /role-picker terdefinisi
+[x] Supabase.initialize() terpanggil (dengan fallback jika credential kosong)
+[x] Commit ke fachri_dev
 ```
 
 ---
