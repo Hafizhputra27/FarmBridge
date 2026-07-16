@@ -13,12 +13,12 @@ Trigger function ini **tidak akan pernah terpanggil oleh event nyata sprint ini*
 ## Task Checklist
 
 ### FG-18 — Edge Function update trust_metrics
-- [ ] Formula `on_time_delivery_rate` = (fulfilled dengan `actual_delivery_date` ≤ `promised_delivery_date`) / (total fulfilled) × 100%, rolling 90 hari
-- [ ] Formula `rejection_rate` = (rejected) / (total pernah pending untuk farmer tsb) × 100%, rolling 90 hari
-- [ ] Formula `fulfillment_consistency` = (fulfilled dengan `delivered_quantity = agreed_quantity`, tanpa partial) / (total fulfilled) × 100%, rolling 90 hari
-- [ ] Trigger dipanggil setelah `transaction` berubah status `fulfilled`/`rejected` (disambungkan sungguhan mulai Sprint 6-7 — cukup pastikan function-nya siap dipanggil sekarang)
-- [ ] Simpan hasil ke tabel `trust_metrics` dengan `window_days=90`
-- [ ] Data > 90 hari lalu tidak ikut mempengaruhi angka (rolling window benar)
+- [x] Formula `on_time_delivery_rate` = (fulfilled dengan `actual_delivery_date` ≤ `promised_delivery_date`) / (total fulfilled) × 100%, rolling 90 hari
+- [x] Formula `rejection_rate` = (rejected) / (total pernah pending untuk farmer tsb) × 100%, rolling 90 hari
+- [x] Formula `fulfillment_consistency` = (fulfilled dengan `delivered_quantity = agreed_quantity`, tanpa partial) / (total fulfilled) × 100%, rolling 90 hari
+- [x] Trigger dipanggil setelah `transaction` berubah status `fulfilled`/`rejected` (disambungkan sungguhan mulai Sprint 6-7 — cukup pastikan function-nya siap dipanggil sekarang)
+- [x] Simpan hasil ke tabel `trust_metrics` dengan `window_days=90`
+- [x] Data > 90 hari lalu tidak ikut mempengaruhi angka (rolling window benar)
 
 **Test manual yang perlu kamu jalankan** (karena tidak ada trigger asli sprint ini):
 ```sql
@@ -47,9 +47,9 @@ supabase/functions/update-trust-metrics/**
 Kalau FG-18 selesai lebih cepat, ini waktu yang baik untuk mulai FG-22 (POST /negotiations + state machine, Sprint 5) lebih awal — ticket paling rawan salah di seluruh project. Baca ulang PRD §5.1 dan draft pseudocode state machine-nya sekarang. Opsional, jangan korbankan kualitas FG-18 demi ini.
 
 ## Definition of Done
-- [ ] Formula 3 metrik terbukti benar lewat test manual di atas (before/after angka) — **cara cek**: jalankan 3 skenario simulasi, screenshot angka `trust_metrics` sebelum & sesudah
-- [ ] Transaksi > 90 hari tidak mempengaruhi angka
-- [ ] Function bisa dipanggil manual (invoke) tanpa error dari Supabase dashboard
+- [x] Formula 3 metrik terbukti benar lewat test manual di atas (before/after angka) — **cara cek**: jalankan 3 skenario simulasi, screenshot angka `trust_metrics` sebelum & sesudah
+- [x] Transaksi > 90 hari tidak mempengaruhi angka
+- [x] Function bisa dipanggil manual (invoke) tanpa error dari Supabase dashboard
 
 ## Referensi PRD
 §2.3 (formula Trust Score), §9 (API spec), §12 (Data Integrity).
