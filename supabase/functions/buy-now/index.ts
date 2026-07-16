@@ -28,9 +28,14 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" } });
   }
 
+  // Ambil segmen terakhir non-kosong dari path, bukan regex prefix-strip.
+  // Prefix-strip (`/functions/v1/buy-now/`) rapuh — req.url runtime yang
+  // di-deploy tidak selalu menyertakan prefix penuh itu, jadi listingId
+  // ke-parse salah ("Listing tidak ditemukan" walau listing-nya ada).
+  // Pola ini konsisten dengan trust-metrics/buyer-metrics yang terbukti
+  // jalan, dan sudah diverifikasi fix di transactions-reject (FG-33).
   const url = new URL(req.url);
-  const pathParts = url.pathname.replace(/^\/functions\/v1\/buy-now\/?/, "").split("/").filter(Boolean);
-  const listingId = pathParts[0];
+  const listingId = url.pathname.split("/").filter(Boolean).pop();
 
   if (!listingId) {
     return new Response(JSON.stringify({ error: "listing_id wajib di URL" }), { status: 400, headers: { "Content-Type": "application/json" } });
