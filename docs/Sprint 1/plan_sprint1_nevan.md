@@ -41,8 +41,8 @@ File: `supabase/migrations/<timestamp>_initial_schema.sql`
 
 ## Fase 3 — Update & Commit
 - [x] Update `sprint1_nevan_dev.md` checklist → `[x]`
-- [ ] Commit: `[FG-2] Migration SQL 11 tabel + index`
-- [ ] Push → `nevan_dev`
+- [x] Commit: `[FG-2] Migration SQL 11 tabel + index` (`44e57cc`)
+- [x] Push → `nevan_dev`
 
 ## Fase 4 — Dokumentasi
-- [ ] Buat `docs/Sprint 1/sprint1_nevan_docs.md`
+- [x] Buat `docs/Sprint 1/sprint1_nevan_docs.md`
