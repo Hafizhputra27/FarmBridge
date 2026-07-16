@@ -15,7 +15,9 @@ class NegotiationRepository {
     if (status != null && status.isNotEmpty) {
       filter = filter.eq('status', status);
     }
-    return filter.order('updated_at', ascending: false);
+    // negotiations tidak punya kolom updated_at (dicek langsung ke skema
+    // remote) — urut created_at, bukan error tiap ChatInboxScreen dibuka.
+    return filter.order('created_at', ascending: false);
   }
 
   Future<Map<String, dynamic>> getNegotiation(String id) {

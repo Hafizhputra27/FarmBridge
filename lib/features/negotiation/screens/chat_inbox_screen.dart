@@ -93,7 +93,7 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
           final item = _negotiations[index];
           return _InboxItem(
             negotiation: item,
-            onTap: () => context.push('/negotiations/${item['id']}'),
+            onTap: () => context.push('/negosiasi/${item['id']}'),
           );
         },
       ),
