@@ -50,67 +50,39 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> signInAnonymously() async {
-    state = state.copyWith(isLoading: true, clearError: true);
-    try {
-      final response =
-          await Supabase.instance.client.auth.signInAnonymously();
-      final userId = response.user!.id;
-      state = state.copyWith(isLoading: false, userId: userId);
-    } catch (e) {
-      debugPrint('signInAnonymously error: $e');
-      state = state.copyWith(isLoading: false, error: e.toString());
-    }
-  }
-
-  Future<void> saveProfile({
-    required String role,
-    required String name,
+  Future<void> signInWithPassword({
+    required String email,
+    required String password,
   }) async {
-    final userId = state.userId;
-    if (userId == null) {
-      state = state.copyWith(
-        isLoading: false,
-        error: 'User belum sign-in',
-      );
-      return;
-    }
-
     state = state.copyWith(isLoading: true, clearError: true);
-
     try {
-      await Supabase.instance.client.from('users').insert({
-        'id': userId,
-        'role': role,
-      });
+      final response = await Supabase.instance.client.auth
+          .signInWithPassword(email: email, password: password);
+      final userId = response.user!.id;
 
-      if (role == 'farmer') {
-        await Supabase.instance.client.from('farmer_profiles').insert({
-          'user_id': userId,
-          'nama': name,
-        });
-      } else {
-        await Supabase.instance.client.from('buyer_profiles').insert({
-          'user_id': userId,
-          'nama_institusi': name,
-        });
-      }
+      final userRow = await Supabase.instance.client
+          .from('users')
+          .select('role')
+          .eq('id', userId)
+          .single();
+      final role = userRow['role'] as String;
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user_role', role);
-      await prefs.setString('user_name', name);
 
-      // User baru punya session — device token yang didapat FcmService
-      // saat app start (belum ada session) belum tersimpan, sync sekarang.
+      // User baru login — device token yang didapat FcmService saat app
+      // start (sebelum ada session) belum tersimpan, sync sekarang.
       await FcmService().syncDeviceToken();
 
-      state = AuthState(
-        isAuthenticated: true,
-        role: role,
-        userId: userId,
+      state = AuthState(isAuthenticated: true, role: role, userId: userId);
+    } on AuthException catch (e) {
+      debugPrint('signInWithPassword error: $e');
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Email atau password salah',
       );
     } catch (e) {
-      debugPrint('saveProfile error: $e');
+      debugPrint('signInWithPassword error: $e');
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }

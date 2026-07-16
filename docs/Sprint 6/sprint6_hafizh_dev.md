@@ -13,12 +13,12 @@ Trust Score & Buyer Metrics belum akan punya data "fulfilled" asli sampai FG-32 
 ## Task Checklist
 
 ### FG-16 — Buyer & Farmer Public Profile UI
-- [ ] Farmer Public Profile: `on_time_delivery_rate`, `rejection_rate`, `fulfillment_consistency`, `total_transactions` — **3 angka terpisah**, bukan skor tunggal (§2.3)
-- [ ] State **"Belum ada riwayat transaksi"** untuk farmer baru — bukan `0%` (§10.1 AC, ini state yang paling sering muncul sprint ini)
-- [ ] Buyer Public Profile: `total_procurement`, `active_orders_count`, `fulfillment_rate`, `avg_monthly_volume`
-- [ ] Label UI `fulfillment_rate` pakai **"Reliability"/"Completion Rate"** — BUKAN "Payment Rate" (PRD eksplisit melarang label ini, tidak ada tracking pembayaran sungguhan)
-- [ ] Konsumsi endpoint dari FG-20 (Sprint 5), bukan hitung ulang di client
-- [ ] Entry point dari feed (FG-15, Fachri, Sprint 5) ke profil farmer — route sudah disepakati sejak Sprint 4, tinggal sambungkan
+- [x] Farmer Public Profile: `on_time_delivery_rate`, `rejection_rate`, `fulfillment_consistency`, `total_transactions` — **3 angka terpisah**, bukan skor tunggal (§2.3) — `lib/features/profile/screens/farmer_profile_screen.dart`
+- [x] State **"Belum ada riwayat transaksi"** untuk farmer baru — bukan `0%` (§10.1 AC, ini state yang paling sering muncul sprint ini) — diverifikasi lewat widget test (`total_transactions: 0` → empty state)
+- [x] Buyer Public Profile: `total_procurement`, `active_orders_count`, `fulfillment_rate`, `avg_monthly_volume` — `lib/features/profile/screens/buyer_profile_screen.dart`
+- [x] Label UI `fulfillment_rate` pakai **"Reliability"/"Completion Rate"** — BUKAN "Payment Rate" (PRD eksplisit melarang label ini, tidak ada tracking pembayaran sungguhan) — widget test assert eksplisit `"Payment Rate"` tidak muncul
+- [x] Konsumsi endpoint dari FG-20 (Sprint 5), bukan hitung ulang di client — `functions.invoke('trust-metrics/...')`/`'buyer-metrics/...'`, tidak ada perhitungan ulang di Flutter
+- [ ] Entry point dari feed (FG-15, Fachri, Sprint 5) ke profil farmer — route sudah disepakati sejak Sprint 4, tinggal sambungkan — *route `/farmer-profile/:id` sudah siap di sisi Hafizh, FG-15 (Fachri) sendiri belum ada, jadi belum bisa disambungkan penuh*
 
 ## File/folder yang kamu sentuh
 ```
@@ -30,9 +30,9 @@ lib/features/profile/**
 - Pastikan route entry point dari FG-15 (Fachri, Sprint 5) masih konsisten dengan yang disepakati di Sprint 4.
 
 ## Definition of Done
-- [ ] Farmer baru (belum ada transaksi) menampilkan "Belum ada riwayat transaksi", bukan 0% — **cara cek**: buka profil akun farmer dummy, screenshot state-nya
-- [ ] Label UI buyer metrics terkonfirmasi bukan "Payment Rate" — **cara cek**: screenshot UI, cocokkan teks label
-- [ ] State "ada data" tervalidasi lewat insert manual di Supabase Studio, tampil benar di UI
+- [ ] Farmer baru (belum ada transaksi) menampilkan "Belum ada riwayat transaksi", bukan 0% — **cara cek**: buka profil akun farmer dummy, screenshot state-nya — *logic terverifikasi lewat widget test, tapi screenshot visual asli belum dilakukan (sandbox eksekusi tidak punya akses screen), perlu dicek manual*
+- [ ] Label UI buyer metrics terkonfirmasi bukan "Payment Rate" — **cara cek**: screenshot UI, cocokkan teks label — *terverifikasi via widget test (`find.textContaining('Payment Rate')` → `findsNothing`), screenshot manual belum*
+- [ ] State "ada data" tervalidasi lewat insert manual di Supabase Studio, tampil benar di UI — *pakai data trust_metrics yang sudah ada (bukan insert baru) di widget test, "tampil benar di UI" (visual) belum dicek manual*
 
 ## Referensi PRD
 §2.3, §2.4, §9, §10.1, §12 (Data Integrity).

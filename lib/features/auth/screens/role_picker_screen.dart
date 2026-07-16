@@ -45,7 +45,7 @@ class RolePickerScreen extends ConsumerWidget {
                     label: 'Saya Petani',
                     role: 'farmer',
                     isLoading: isLoading,
-                    onTap: () => _handleRoleSelect(context, ref, 'farmer'),
+                    onTap: () => _handleRoleSelect(context, 'farmer'),
                   ),
                   const SizedBox(height: 16),
                   _RoleCard(
@@ -53,7 +53,7 @@ class RolePickerScreen extends ConsumerWidget {
                     label: 'Saya Pembeli',
                     role: 'buyer',
                     isLoading: isLoading,
-                    onTap: () => _handleRoleSelect(context, ref, 'buyer'),
+                    onTap: () => _handleRoleSelect(context, 'buyer'),
                   ),
                   if (error != null) ...[
                     const SizedBox(height: 24),
@@ -77,18 +77,8 @@ class RolePickerScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _handleRoleSelect(
-    BuildContext context,
-    WidgetRef ref,
-    String role,
-  ) async {
-    final notifier = ref.read(authProvider.notifier);
-    await notifier.signInAnonymously();
-    final error = ref.read(authProvider).error;
-    if (error != null) return;
-    if (context.mounted) {
-      context.push('/name-input', extra: role);
-    }
+  void _handleRoleSelect(BuildContext context, String role) {
+    context.push('/login', extra: role);
   }
 }
 
