@@ -14,12 +14,18 @@ class FcmService {
   Future<void> initialize() async {
     await _messaging.requestPermission();
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    await syncDeviceToken();
+    _messaging.onTokenRefresh.listen(_saveDeviceToken);
+  }
 
+  /// Re-fetch dan simpan device token — panggil ini lagi setelah user
+  /// login (mis. selesai role picker), karena token yang didapat saat
+  /// [initialize] dipanggil di app start belum tentu punya user session.
+  Future<void> syncDeviceToken() async {
     final token = await _messaging.getToken();
     if (token != null) {
       await _saveDeviceToken(token);
     }
-    _messaging.onTokenRefresh.listen(_saveDeviceToken);
   }
 
   Future<void> _saveDeviceToken(String token) async {

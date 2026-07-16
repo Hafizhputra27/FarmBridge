@@ -52,11 +52,35 @@ Catatan soal Hafizh & Alexander:
 
 Kalau semua checklist hijau → `git push origin hafizh_dev`.
 
-## 5. Kapan Merge `hafizh_dev` → `main`
+## 5. Kapan Merge `hafizh_dev` → `main` (HYBRID: Per Fase, bukan Per Sprint)
 
-- **Minimal di akhir setiap sprint** (13 kali sepanjang hackathon) — tag dengan `sprint-N-done` (`git tag sprint-3-done && git push origin --tags`) supaya ada checkpoint yang bisa di-rollback kalau sprint berikutnya bermasalah.
-- **Boleh lebih sering** kalau sebuah vertical slice utuh sudah demo-able di tengah sprint (mis. Buy Now end-to-end sudah bisa dicoba) — jangan tunggu akhir sprint kalau sudah ada checkpoint yang aman untuk di-lock.
-- Merge ke `main` pakai `git merge --no-ff hafizh_dev` (bukan fast-forward, bukan squash) — supaya history tetap jelas per-sprint saat nanti butuh telusur balik untuk debugging atau demo script.
+**Merge ke main hanya 3 kali selama 30 jam — di akhir setiap FASE:**
+
+```
+FASE 1 (Sprint 1-3) — END ~6 jam
+├─ Tag checkpoint: sprint-1-done, sprint-2-done, sprint-3-done (internal only)
+└─ MERGE #1 → main (tag: phase-1-complete)
+
+FASE 2 (Sprint 4-9) — END ~18 jam
+├─ Tag checkpoint: sprint-4-done, sprint-5-done, ... sprint-9-done (internal only)
+└─ MERGE #2 → main (tag: phase-2-complete)
+
+FASE 3 (Sprint 10-13) — END ~28 jam
+├─ Tag checkpoint: sprint-10-done, sprint-11-done, sprint-12-done, sprint-13-done (internal only)
+└─ MERGE #3 → main (tag: phase-3-complete)
+```
+
+**Checkpoint tagging per sprint (internal tracking, jangan push ke origin):**
+- `git tag sprint-3-done` (hanya local, untuk reference sendiri)
+- `git tag sprint-9-done` (before FASE 2 merge to main)
+- Kalau perlu rollback ke sprint spesifik: reset ke tag itu
+
+**Merge ke `main` pakai:** `git merge --no-ff hafizh_dev` (bukan fast-forward, bukan squash) — supaya history tetap jelas per-fase saat nanti butuh telusur balik untuk debugging atau demo script.
+
+**Strategi:**
+- Selama FASE 1: semua ticket sprint 1-3 accumulate di `hafizh_dev`, jangan push ke `main`
+- Begitu sprint 3 selesai (semua 3 sprint green): baru merge `hafizh_dev` → `main` (MERGE #1)
+- Repeat untuk FASE 2 & 3
 
 ## 6. Resolusi Konflik
 
@@ -85,11 +109,67 @@ Sebuah ticket dianggap selesai untuk kebutuhan merge (bukan untuk kebutuhan QA f
 - [ ] Sudah di-push ke branch pribadi dengan commit message `[FG-XX] ...`
 - [ ] Dependency yang dicatat di sprint doc terkait sudah tersedia (jangan merge kode yang butuh function/endpoint yang belum ada)
 
-## 10. Aturan AI Assistant (Claude Code)
+---
 
-Repo ini dipakai untuk lomba/hackathon — histori commit dan daftar Contributors di GitHub harus murni berasal dari empat anggota tim (Hafizh, Nevan, Fachri, Alexander), bukan dari AI assistant yang membantu ngoding.
+## 10. Execution Timeline (Hybrid Per-Fase)
 
-- **Claude tidak pernah menjalankan operasi git yang mengubah state repo** di project ini: `add`, `commit`, `push`, `merge`, `branch`, `checkout -b`, `tag`, `reset`, `revert`, dll — tanpa pengecualian, walau diminta atau tampak disetujui user di tengah percakapan.
-- Operasi git **read-only** tetap boleh dijalankan Claude: `status`, `diff`, `log`, `show`, `blame` — untuk kebutuhan analisis/debugging.
-- Kalau ada perubahan yang siap di-commit, Claude berhenti di titik itu dan menyerahkan ke pemilik branch: tampilkan diff/ringkasan perubahan dan draft commit message (format `[FG-XX] deskripsi singkat`, lihat Aturan Dasar #4) sebagai teks, lalu **user sendiri** yang menjalankan `git add`/`git commit`/`git push` di terminalnya.
-- Aturan ini berlaku untuk semua anggota tim yang pakai Claude Code di repo ini, bukan cuma Hafizh.
+```
+T+0 (Kickoff)
+├─ Alexander: selesai desain FG-9 (Role Picker) + FG-10 (Chat Inbox)
+├─ Team: clone repo, checkout hafizh_dev
+└─ Nevan, Hafizh, Fachri: mulai Sprint 1
+
+T+1-6 (FASE 1: Sprint 1-3)
+├─ Sprint 1 (2h): Nevan FG-2 migration, Hafizh FG-5/6, Fachri FG-57 scaffold
+├─ Sprint 2 (2h): Nevan FG-3/4 (Auth/RLS/Realtime)
+├─ Sprint 3 (2h): Hafizh FG-7 (seed), Fachri FG-11 (Role Picker UI)
+├─ Checkpoint: sprint-1-done, sprint-2-done, sprint-3-done (local tags)
+└─ **MERGE #1** (hafizh_dev → main): `git merge --no-ff hafizh_dev && git tag phase-1-complete && git push origin main --tags`
+
+T+6-18 (FASE 2: Sprint 4-9)
+├─ Sprint 4-9: Listing, Profile, Negotiation, Buy Now, Fulfillment, Recurring
+├─ Checkpoint tags: sprint-4-done ... sprint-9-done (local)
+└─ **MERGE #2** (hafizh_dev → main): sama seperti MERGE #1
+
+T+18-28 (FASE 3: Sprint 10-13)
+├─ Sprint 10-13: E2E testing, Polish, AC verify, Demo readiness
+├─ Checkpoint tags: sprint-10-done ... sprint-13-done (local)
+└─ **MERGE #3** (hafizh_dev → main): git merge --no-ff hafizh_dev && git tag final-demo && git push
+
+T+28-30 (Code Freeze + Demo Rehearsal)
+├─ Code freeze: hanya critical bug fix
+├─ Tag final release: git tag release-garudahacks-7.0
+└─ Demo prep: run through script
+```
+
+---
+
+## 11. Merge Commands Per Fase (copy-paste ready)
+
+**MERGE #1 — End of FASE 1 (Sprint 3):**
+```bash
+# Hafizh runs:
+git checkout hafizh_dev
+git fetch origin
+git merge origin/nevan_dev
+git merge origin/fachri_dev
+supabase db push --dry-run  # verify
+flutter analyze            # verify
+git push origin hafizh_dev
+git checkout main
+git merge --no-ff hafizh_dev
+git tag phase-1-complete
+git push origin main --tags
+echo "✅ FASE 1 merge complete"
+```
+
+**MERGE #2 — End of FASE 2 (Sprint 9):**
+```bash
+# Same as above, tapi tag phase-2-complete
+```
+
+**MERGE #3 — End of FASE 3 (Sprint 13):**
+```bash
+# Same, tapi tag final-demo
+git tag release-garudahacks-7.0  # final release tag
+```

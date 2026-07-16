@@ -8,9 +8,9 @@
 ## Task Checklist
 
 ### FG-7 — Seed price_reference_data awal
-- [ ] Dataset dummy untuk minimal 5-8 kategori produk pertanian × 2-3 region, dengan `avg_price`/`min_price`/`max_price` yang masuk akal
-- [ ] Insert via seed script (`supabase/seed.sql`), bukan manual satu-satu — supaya bisa di-rerun
-- [ ] Test: kategori/region yang ada di seed → `POST /price-recommendation` (Sprint 4, FG-23) akan mengembalikan `recommended_price` bukan null; kategori di luar seed → fallback sesuai §11 (belum ada endpoint-nya sprint ini, cukup pastikan data-nya siap dikonsumsi nanti)
+- [x] Dataset dummy untuk minimal 5-8 kategori produk pertanian × 2-3 region, dengan `avg_price`/`min_price`/`max_price` yang masuk akal — 6 kategori (Beras, Cabai Merah, Bawang Merah, Tomat, Jagung, Kentang) × 3 region (Jawa Barat/Tengah/Timur), 18 baris, semua `min_price < avg_price < max_price`
+- [x] Insert via seed script (`supabase/seed.sql`), bukan manual satu-satu — supaya bisa di-rerun — `DELETE`+`INSERT`, diuji rerun 2x tetap 18 baris (tidak dobel)
+- [x] Test: data siap dikonsumsi nanti (endpoint `POST /price-recommendation` sendiri belum ada sprint ini, sesuai catatan) — diverifikasi lewat RLS public read + `curl` sebagai `anon` key, HTTP 200, data lengkap terbaca
 
 ## File/folder yang kamu sentuh
 ```
@@ -22,8 +22,8 @@ supabase/seed.sql
 - Tidak ada dependency masuk dari Nevan/Fachri sprint ini.
 
 ## Definition of Done
-- [ ] `price_reference_data` terisi lewat `supabase/seed.sql`, bisa di-rerun tanpa duplikasi — **cara cek**: jalankan seed script 2x, pastikan tidak ada row ganda (pakai `on conflict do nothing`/`upsert` kalau perlu)
-- [ ] Data mencakup minimal 5-8 kategori × 2-3 region dengan angka harga yang masuk akal (bukan angka acak)
+- [x] `price_reference_data` terisi lewat `supabase/seed.sql`, bisa di-rerun tanpa duplikasi — **cara cek**: jalankan seed script 2x, pastikan tidak ada row ganda (pakai `on conflict do nothing`/`upsert` kalau perlu) — **diverifikasi 2026-07-16**, tetap 18 baris setelah rerun
+- [x] Data mencakup minimal 5-8 kategori × 2-3 region dengan angka harga yang masuk akal (bukan angka acak) — 6 kategori × 3 region
 
 ## Referensi PRD
 §2.3, §9 (price_reference_data, konteks untuk FG-23 di Sprint 4).
