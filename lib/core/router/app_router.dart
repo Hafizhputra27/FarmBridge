@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-final currentUserRoleProvider = Provider<String?>((ref) {
-  return null;
-});
+import '../../features/auth/providers/auth_provider.dart';
+import '../../features/auth/screens/role_picker_screen.dart';
+import '../../features/auth/screens/name_input_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -21,8 +20,14 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/role-picker',
-        builder: (context, state) =>
-            const PlaceholderScreen(title: 'Role Picker'),
+        builder: (context, state) => const RolePickerScreen(),
+      ),
+      GoRoute(
+        path: '/name-input',
+        builder: (context, state) {
+          final role = state.extra as String;
+          return NameInputScreen(role: role);
+        },
       ),
       ShellRoute(
         builder: (context, state, child) => child,
