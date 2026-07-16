@@ -106,7 +106,11 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                           buyerId: buyerId,
                         );
                         if (ctx.mounted) Navigator.pop(ctx);
-                        if (mounted) context.go('/transaksi/$transactionId');
+                        // push, bukan go — biar ada back button otomatis
+                        // (go mereset stack, user kena "keluar app" kalau
+                        // tekan back dari Transaction Detail, tidak ada
+                        // history buat di-pop).
+                        if (mounted) context.push('/transaksi/$transactionId');
                       } catch (e) {
                         setSheetState(() => sheetError = e.toString());
                       }

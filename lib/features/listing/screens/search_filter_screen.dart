@@ -48,7 +48,11 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          // go, bukan pop — pop di dalam nested route ShellRoute terbukti
+          // tidak nge-refresh matchedLocation yang dipakai MainShell buat
+          // highlight tab (navbar nyangkut di "Search" walau konten sudah
+          // balik ke Home). go() maksa full re-evaluate location.
+          onPressed: () => context.go('/buyer'),
         ),
         title: const Text('Cari Listing'),
         actions: [
