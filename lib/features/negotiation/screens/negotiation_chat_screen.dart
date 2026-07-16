@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../data/negotiation_repository.dart';
 import '../widgets/chat_bubble.dart';
@@ -229,11 +230,18 @@ class _NegotiationChatScreenState extends ConsumerState<NegotiationChatScreen> {
     return Scaffold(
       appBar: AppBar(
         title: GestureDetector(
-          onTap: () {
-            if (counterpartId != null) {
-              Navigator.of(context).pushNamed(
-                '/farmer-profile/$counterpartId',
-              );
+          onTap: () async {
+            if (counterpartId == null) return;
+            if (isBuyer) {
+              // Lawan bicara farmer: /farmer-profile/:id = users.id, cocok.
+              context.push('/farmer-profile/$counterpartId');
+              return;
+            }
+            // Saya farmer, lawan bicara buyer: /buyer-profile/:id expect
+            // buyer_profiles.id, bukan users.id — resolve dulu.
+            final buyerProfileId = await _repo.getBuyerProfileId(counterpartId);
+            if (buyerProfileId != null && context.mounted) {
+              context.push('/buyer-profile/$buyerProfileId');
             }
           },
           child: Column(
