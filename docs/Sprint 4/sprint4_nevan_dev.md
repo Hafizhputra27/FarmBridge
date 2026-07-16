@@ -12,6 +12,7 @@ Trigger function ini **tidak akan pernah terpanggil oleh event nyata sprint ini*
 
 ## Task Checklist
 
+
 ### FG-18 — Edge Function update trust_metrics
 - [ ] Formula `on_time_delivery_rate` = (fulfilled dengan `actual_delivery_date` ≤ `promised_delivery_date`) / (total fulfilled) × 100%, rolling 90 hari
 - [ ] Formula `rejection_rate` = (rejected) / (total pernah pending untuk farmer tsb) × 100%, rolling 90 hari
