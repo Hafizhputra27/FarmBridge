@@ -84,3 +84,12 @@ Sebuah ticket dianggap selesai untuk kebutuhan merge (bukan untuk kebutuhan QA f
 - [ ] Tidak ada error baru di `flutter analyze` (kalau Flutter) atau migration dry-run gagal (kalau schema)
 - [ ] Sudah di-push ke branch pribadi dengan commit message `[FG-XX] ...`
 - [ ] Dependency yang dicatat di sprint doc terkait sudah tersedia (jangan merge kode yang butuh function/endpoint yang belum ada)
+
+## 10. Aturan AI Assistant (Claude Code)
+
+Repo ini dipakai untuk lomba/hackathon — histori commit dan daftar Contributors di GitHub harus murni berasal dari empat anggota tim (Hafizh, Nevan, Fachri, Alexander), bukan dari AI assistant yang membantu ngoding.
+
+- **Claude tidak pernah menjalankan operasi git yang mengubah state repo** di project ini: `add`, `commit`, `push`, `merge`, `branch`, `checkout -b`, `tag`, `reset`, `revert`, dll — tanpa pengecualian, walau diminta atau tampak disetujui user di tengah percakapan.
+- Operasi git **read-only** tetap boleh dijalankan Claude: `status`, `diff`, `log`, `show`, `blame` — untuk kebutuhan analisis/debugging.
+- Kalau ada perubahan yang siap di-commit, Claude berhenti di titik itu dan menyerahkan ke pemilik branch: tampilkan diff/ringkasan perubahan dan draft commit message (format `[FG-XX] deskripsi singkat`, lihat Aturan Dasar #4) sebagai teks, lalu **user sendiri** yang menjalankan `git add`/`git commit`/`git push` di terminalnya.
+- Aturan ini berlaku untuk semua anggota tim yang pakai Claude Code di repo ini, bukan cuma Hafizh.

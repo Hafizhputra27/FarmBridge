@@ -16,18 +16,18 @@
 ## Task Checklist
 
 ### FG-5 — Setup CI/CD Pipeline
-- [ ] GitHub Actions workflow: lint (kalau ada) → deploy migration via Supabase CLI → deploy Edge Functions
-- [ ] GitHub Secrets untuk Supabase access token & project ref (jangan hardcode)
-- [ ] Trigger pada push ke branch `main`
-- [ ] Kalau workflow gagal (token salah/expired), job harus gagal dengan pesan jelas — jangan silent fail
+- [x] GitHub Actions workflow: lint (kalau ada) → deploy migration via Supabase CLI → deploy Edge Functions — `.github/workflows/deploy.yml`
+- [x] GitHub Secrets untuk Supabase access token & project ref (jangan hardcode) — `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD` terpasang & terverifikasi (`gh secret list`)
+- [x] Trigger pada push ke branch `main` — dikonfigurasi di workflow; run sungguhan baru terjadi setelah merge `hafizh_dev` → `main`
+- [x] Kalau workflow gagal (token salah/expired), job harus gagal dengan pesan jelas — jangan silent fail — by design (`bash -eo pipefail` default GitHub Actions, tanpa script tambahan)
 
 **Detail teknis**: workflow minimal `.github/workflows/deploy.yml`, trigger `on: push: branches: [main]`, step `supabase functions deploy` per folder di `supabase/functions/`, plus `supabase db push` untuk migration. Deploy Flutter APK **di luar scope** ini (build manual, sesuai batasan hackathon §13.1).
 
 ### FG-6 — Setup FCM Push Notification
-- [ ] Project Firebase Cloud Messaging, hubungkan ke app Flutter (Android minimal untuk demo; iOS opsional)
-- [ ] Edge Function helper generik: `send-push(device_token, title, body, deep_link)` — satu fungsi, dipanggil dari job/fitur lain (jangan bikin fungsi terpisah per use-case, biar tidak duplikasi logic FCM API call)
-- [ ] Simpan device token ke kolom `users.device_token` (hasil koordinasi dengan Nevan di FG-2) — **jangan mulai bagian ini sebelum dapat konfirmasi dari Nevan**
-- [ ] Error handling: token invalid/expired tidak boleh crash Edge Function
+- [x] Project Firebase Cloud Messaging, hubungkan ke app Flutter (Android minimal untuk demo; iOS opsional) — project `farmbridge-d7fe8`, `flutterfire configure` selesai, `main.dart` wired
+- [x] Edge Function helper generik: `send-push(device_token, title, body, deep_link)` — satu fungsi, dipanggil dari job/fitur lain (jangan bikin fungsi terpisah per use-case, biar tidak duplikasi logic FCM API call) — dideploy & **diverifikasi end-to-end, notifikasi muncul di HP fisik (Infinix X6885)**
+- [ ] Simpan device token ke kolom `users.device_token` (hasil koordinasi dengan Nevan di FG-2) — **jangan mulai bagian ini sebelum dapat konfirmasi dari Nevan** — kode `FcmService._saveDeviceToken()` sudah siap, **menunggu migration FG-2 Nevan** supaya kolom benar-benar ada di DB (Task 9)
+- [x] Error handling: token invalid/expired tidak boleh crash Edge Function — diverifikasi: token invalid → HTTP 200 `{"ok":false,"error":"FCM 400: ..."}`, bukan 500
 
 ## File/folder yang kamu sentuh
 ```
@@ -58,10 +58,10 @@ Kalau `supabase db push --dry-run` gagal, **jangan lanjut ke `main`** — kembal
 - Kamu dan Nevan sama-sama berkepentingan dengan struktur `users` table (kolom `device_token`) — selesaikan lewat obrolan cepat sebelum migration ditulis, bukan lewat edit-mengedit file yang sama.
 
 ## Definition of Done
-- [ ] Push ke `main` → Edge Function ter-deploy otomatis ke staging — **cara cek**: push commit kosong, lihat GitHub Actions run hijau dan timestamp function ter-update di Supabase dashboard
-- [ ] `supabase db push` via CI/CD berhasil apply migration FG-2 tanpa manual intervention
-- [ ] Device token terdaftar → FCM kirim notifikasi ke device Android — **cara cek**: panggil `send-push` manual dari Supabase function invoke, notifikasi muncul di device fisik/emulator
-- [ ] `hafizh_dev` berhasil merge `nevan_dev` dan `supabase db push --dry-run` hijau sebelum masuk `main`
+- [ ] Push ke `main` → Edge Function ter-deploy otomatis ke staging — **cara cek**: push commit kosong, lihat GitHub Actions run hijau dan timestamp function ter-update di Supabase dashboard — *belum, menunggu merge `hafizh_dev` → `main`*
+- [ ] `supabase db push` via CI/CD berhasil apply migration FG-2 tanpa manual intervention — *belum, menunggu migration FG-2 Nevan masuk*
+- [x] Device token terdaftar → FCM kirim notifikasi ke device Android — **cara cek**: panggil `send-push` manual dari Supabase function invoke, notifikasi muncul di device fisik/emulator — **diverifikasi 2026-07-16 di HP fisik Infinix X6885**
+- [ ] `hafizh_dev` berhasil merge `nevan_dev` dan `supabase db push --dry-run` hijau sebelum masuk `main` — *langkah berikutnya, dijalankan Hafizh sendiri*
 
 ## Referensi PRD
 §7 (Tech Stack), §12 (NFR — Observability untuk CI/CD & FCM).
