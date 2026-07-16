@@ -14,8 +14,8 @@
 - Tidak ada dependency masuk atau keluar untuk kamu sprint ini — pantau saja kalau Hafizh (FG-7) atau Fachri (FG-11) butuh klarifikasi soal schema/RLS yang kamu bangun.
 
 ## Definition of Done
-- [ ] Draft pseudocode state machine FG-22 (opsional) siap jadi starting point Sprint 5
-- [ ] Tidak ada isu schema/RLS yang menghambat FG-7 atau FG-11 berjalan
+- [x] Draft pseudocode state machine FG-22 (opsional) siap jadi starting point Sprint 5
+- [x] Tidak ada isu schema/RLS yang menghambat FG-7 atau FG-11 berjalan
 
 ## Referensi PRD
 §2.3 (persiapan FG-18), §5.1 (persiapan FG-22).
