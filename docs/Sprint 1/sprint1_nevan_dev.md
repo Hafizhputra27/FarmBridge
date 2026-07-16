@@ -15,12 +15,12 @@
 ## Task Checklist
 
 ### FG-2 — Migration SQL 11 tabel (10 + buyer_metrics v6)
-- [ ] Migration SQL untuk `users`, `farmer_profiles`, `buyer_profiles`, `listings`, `price_reference_data`, `negotiations`, `negotiation_messages`, `transactions`, `recurring_orders`, `trust_metrics`, **`buyer_metrics`** (tabel baru v6)
-- [ ] `users.email` **NULLABLE** (revisi v5 — tidak ada form signup/login)
-- [ ] `users.device_token` nullable — hasil koordinasi dengan Hafizh (lihat poin 1 di atas)
-- [ ] Tipe data eksplisit, FK ke parent table, `NOT NULL` di kolom wajib, `DEFAULT` values
-- [ ] Index di `negotiations.status`, `transactions.status`, `transactions.farmer_id`, `listings.status`
-- [ ] `buyer_metrics`: `id` (PK uuid), `buyer_id` (FK → buyer_profiles), `total_procurement numeric(14,2)`, `active_orders_count int`, `fulfillment_rate numeric(5,2)`, `avg_monthly_volume numeric(12,2)`, `window_days int default 90`, `updated_at timestamptz`
+- [x] Migration SQL untuk `users`, `farmer_profiles`, `buyer_profiles`, `listings`, `price_reference_data`, `negotiations`, `negotiation_messages`, `transactions`, `recurring_orders`, `trust_metrics`, **`buyer_metrics`** (tabel baru v6)
+- [x] `users.email` **NULLABLE** (revisi v5 — tidak ada form signup/login)
+- [x] `users.device_token` nullable — hasil koordinasi dengan Hafizh (lihat poin 1 di atas)
+- [x] Tipe data eksplisit, FK ke parent table, `NOT NULL` di kolom wajib, `DEFAULT` values
+- [x] Index di `negotiations.status`, `transactions.status`, `transactions.farmer_id`, `listings.status`
+- [x] `buyer_metrics`: `id` (PK uuid), `buyer_id` (FK → buyer_profiles), `total_procurement numeric(14,2)`, `active_orders_count int`, `fulfillment_rate numeric(5,2)`, `avg_monthly_volume numeric(12,2)`, `window_days int default 90`, `updated_at timestamptz`
 
 **Detail teknis — kerangka kolom minimum** (boleh nambah kolom lain sesuai kebutuhan RLS/query di Sprint 2):
 ```
@@ -52,9 +52,9 @@ supabase/migrations/*.sql
 - Hafizh (FG-6, device_token) berkepentingan langsung dengan struktur `users` table — hindari konflik dengan menyepakati skema `device_token` di awal (bukan setelah migration jalan).
 
 ## Definition of Done
-- [ ] `supabase db push` jalan tanpa error, 11 tabel sesuai ERD §8 + §2.4 (termasuk `buyer_metrics`) — **cara cek**: `supabase db diff` kosong setelah push, cocokkan tiap kolom ke ERD satu-satu di Table Editor
-- [ ] Kolom `device_token` di `users` sudah final & disepakati dengan Hafizh sebelum migration di-commit
-- [ ] Migration bisa di-rerun bersih di environment baru (`supabase db reset` lalu `db push` tanpa error)
+- [x] `supabase db push` jalan tanpa error, 11 tabel sesuai ERD §8 + §2.4 (termasuk `buyer_metrics`) — **cara cek**: `supabase db diff` kosong setelah push, cocokkan tiap kolom ke ERD satu-satu di Table Editor
+- [x] Kolom `device_token` di `users` sudah final & disepakati dengan Hafizh sebelum migration di-commit
+- [x] Migration bisa di-rerun bersih di environment baru (`supabase db reset` lalu `db push` tanpa error)
 
 ## Referensi PRD
 §2.3, §2.4, §7 (Tech Stack), §8 & §8.1 (ERD), §13.1 (Auth tanpa login tradisional, konteks device_token).

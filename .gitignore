@@ -43,3 +43,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase service account (secret — FG-6, jangan pernah commit)
+**/serviceAccountKey.json
+**/*firebase-adminsdk*.json
+
+# Supabase local secrets
+supabase/.env
