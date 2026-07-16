@@ -1,6 +1,14 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-void main() {
+import 'core/services/fcm_service.dart';
+import 'firebase_options.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await FcmService().initialize();
+  // Supabase.initialize(...) — punya Fachri (FG-57), tambahkan di sini juga.
   runApp(const MyApp());
 }
 
