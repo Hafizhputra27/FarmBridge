@@ -99,6 +99,10 @@ class _BuyerHomeFeedScreenState extends State<BuyerHomeFeedScreen> {
         title: const Text('FarmBridge'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.chat),
+            onPressed: () => context.push('/percakapan'),
+          ),
+          IconButton(
             icon: const Icon(Icons.search),
             onPressed: () => context.push('/buyer/search'),
           ),

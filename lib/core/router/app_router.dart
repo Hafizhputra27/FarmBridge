@@ -8,6 +8,8 @@ import '../../features/listing/screens/my_listings_screen.dart';
 import '../../features/listing/screens/create_listing_screen.dart';
 import '../../features/listing/screens/buyer_home_feed_screen.dart';
 import '../../features/listing/screens/search_filter_screen.dart';
+import '../../features/negotiation/screens/negotiation_chat_screen.dart';
+import '../../features/negotiation/screens/chat_inbox_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -61,6 +63,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => PlaceholderScreen(
           title: 'Farmer Profile — ${state.pathParameters['farmerId']}',
         ),
+      ),
+      GoRoute(
+        path: '/negosiasi/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return NegotiationChatScreen(negotiationId: id);
+        },
+      ),
+      GoRoute(
+        path: '/percakapan',
+        builder: (context, state) => const ChatInboxScreen(),
       ),
     ],
   );

@@ -1,8 +1,9 @@
 # Sprint 5 — Dokumentasi Fachri (FG-15)
 
-**Tanggal:** 16 Juli 2026  
-**Status:** ✅ Selesai  
-**Branch:** `fachri_dev`
+**Tanggal:** 17 Juli 2026  
+**Status:** ✅ Selesai & committed  
+**Branch:** `fachri_dev`  
+**Commit:** `8145cb3`
 
 ---
 
@@ -19,6 +20,7 @@ FG-15 Buyer Home Feed + Search & Filter — buyer bisa melihat semua listing dar
 | `lib/features/listing/screens/buyer_home_feed_screen.dart` | File baru | Grid feed 2 kolom, infinite scroll, pull-to-refresh |
 | `lib/features/listing/screens/search_filter_screen.dart` | File baru | Filter kategori, region, rentang harga |
 | `lib/core/router/app_router.dart` | Edit | `/buyer` + `/buyer/search` + `/farmer-profile/:id` stub |
+| `supabase/migrations/20260717000000_listings_farmer_profiles_fk.sql` | File baru | FK `listings.farmer_id` → `farmer_profiles(user_id)` |
 
 ---
 
@@ -46,7 +48,7 @@ FG-15 Buyer Home Feed + Search & Filter — buyer bisa melihat semua listing dar
 - Feed menggunakan `ListingRepository.filterListings()` dari FG-13
 - Data listing berasal dari FG-14 (Create Listing)
 - Pagination: `limit(20)`, scroll controller untuk load more
-- `farmer_profiles` join sudah include di query PostgREST
+- **FK Fix:** `listings.farmer_id` → `farmer_profiles(user_id)` — menyelesaikan error PostgREST `PGRST200` saat query join `.select('*, farmer_profiles(nama, lokasi)')`. Migration tercatat di `supabase/migrations/20260717000000_listings_farmer_profiles_fk.sql`
 - Farmer profile screen asli di FG-16 (Hafizh, Sprint 6)
 - Route stub: `/farmer-profile/:farmerId` → PlaceholderScreen
 
