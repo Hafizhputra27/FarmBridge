@@ -135,12 +135,21 @@ class _NegotiationChatScreenState extends ConsumerState<NegotiationChatScreen> {
   Future<void> _onAccept() async {
     final userId = ref.read(authProvider).userId;
     if (userId == null) return;
+    final offerPrice =
+        (_negotiation?['current_offer_price'] as num?)?.toDouble();
     try {
-      await _repo.sendMessage(
+      final result = await _repo.sendMessage(
         negotiationId: widget.negotiationId,
         senderId: userId,
         actionType: 'accept',
+        offerPrice: offerPrice,
       );
+      final transactionId = result['transaction_id']?.toString();
+      if (transactionId != null && mounted) {
+        // push, bukan go — sama seperti alur Buy Now (lihat
+        // listing_detail_screen.dart), biar back button jalan normal.
+        context.push('/transaksi/$transactionId');
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -294,26 +303,37 @@ class _NegotiationChatScreenState extends ConsumerState<NegotiationChatScreen> {
               ),
             ),
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              reverse: true,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final msg = _messages[_messages.length - 1 - index];
-                final actionType = msg['action_type']?.toString() ?? 'message';
-                final msgSenderId = msg['sender_id']?.toString();
+            child: _messages.isEmpty
+                ? Center(
+                    child: Text(
+                      'Belum ada pesan',
+                      style: TextStyle(color: Colors.grey.shade500),
+                    ),
+                  )
+                : ListView.builder(
+                    controller: _scrollController,
+                    reverse: true,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: _messages.length,
+                    itemBuilder: (context, index) {
+                      final msg = _messages[_messages.length - 1 - index];
+                      final actionType =
+                          msg['action_type']?.toString() ?? 'message';
+                      final msgSenderId = msg['sender_id']?.toString();
 
-                return ChatBubble(
-                  isMine: msgSenderId == currentUserId,
-                  text: msg['message_text']?.toString(),
-                  offerPrice: (msg['offer_price'] as num?)?.toDouble(),
-                  recommendedPrice: (negotiation['recommended_price'] as num?)?.toDouble(),
-                  actionType: actionType,
-                  createdAt: DateTime.parse(msg['created_at'].toString()),
-                );
-              },
-            ),
+                      return ChatBubble(
+                        isMine: msgSenderId == currentUserId,
+                        text: msg['message_text']?.toString(),
+                        offerPrice: (msg['offer_price'] as num?)?.toDouble(),
+                        recommendedPrice:
+                            (negotiation['recommended_price'] as num?)
+                                ?.toDouble(),
+                        actionType: actionType,
+                        createdAt:
+                            DateTime.parse(msg['created_at'].toString()),
+                      );
+                    },
+                  ),
           ),
           NegotiationActions(
             isReceiver: isReceiver,
