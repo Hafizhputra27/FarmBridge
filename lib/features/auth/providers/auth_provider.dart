@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/services/fcm_service.dart';
+
 class AuthState {
   final bool isLoading;
   final bool isAuthenticated;
@@ -42,8 +44,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> initialize() async {
     final prefs = await SharedPreferences.getInstance();
     final role = prefs.getString('user_role');
-    if (role != null) {
-      state = state.copyWith(isAuthenticated: true, role: role);
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (role != null && userId != null) {
+      state = state.copyWith(isAuthenticated: true, role: role, userId: userId);
     }
   }
 
@@ -96,6 +99,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user_role', role);
       await prefs.setString('user_name', name);
+
+      // User baru punya session — device token yang didapat FcmService
+      // saat app start (belum ada session) belum tersimpan, sync sekarang.
+      await FcmService().syncDeviceToken();
 
       state = AuthState(
         isAuthenticated: true,
