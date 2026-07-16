@@ -6,6 +6,8 @@ import '../../features/auth/screens/role_picker_screen.dart';
 import '../../features/auth/screens/name_input_screen.dart';
 import '../../features/listing/screens/my_listings_screen.dart';
 import '../../features/listing/screens/create_listing_screen.dart';
+import '../../features/listing/screens/buyer_home_feed_screen.dart';
+import '../../features/listing/screens/search_filter_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -54,6 +56,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           ...farmerRoutes,
         ],
       ),
+      GoRoute(
+        path: '/farmer-profile/:farmerId',
+        builder: (context, state) => PlaceholderScreen(
+          title: 'Farmer Profile — ${state.pathParameters['farmerId']}',
+        ),
+      ),
     ],
   );
 });
@@ -61,8 +69,13 @@ final routerProvider = Provider<GoRouter>((ref) {
 final buyerRoutes = <RouteBase>[
   GoRoute(
     path: '/buyer',
-    builder: (context, state) =>
-        const PlaceholderScreen(title: 'Buyer Home'),
+    builder: (context, state) => const BuyerHomeFeedScreen(),
+    routes: [
+      GoRoute(
+        path: 'search',
+        builder: (context, state) => const SearchFilterScreen(),
+      ),
+    ],
   ),
 ];
 
