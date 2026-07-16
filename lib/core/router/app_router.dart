@@ -12,6 +12,8 @@ import '../../features/listing/screens/buyer_home_feed_screen.dart';
 import '../../features/listing/screens/search_filter_screen.dart';
 import '../../features/negotiation/screens/negotiation_chat_screen.dart';
 import '../../features/negotiation/screens/chat_inbox_screen.dart';
+import '../../features/listing/screens/listing_detail_screen.dart';
+import '../../features/transaction/screens/transaction_detail_screen.dart';
 import '../widgets/main_shell.dart';
 
 // Pure — diextract dari redirect callback supaya bisa diunit-test tanpa
@@ -84,6 +86,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/percakapan',
             builder: (context, state) => const ChatInboxScreen(),
           ),
+          GoRoute(
+            path: '/listing/:id',
+            builder: (context, state) =>
+                ListingDetailScreen(listingId: state.pathParameters['id']!),
+          ),
         ],
       ),
       // Full-screen, sengaja di luar shell — chat detail tidak butuh
@@ -93,6 +100,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final id = state.pathParameters['id']!;
           return NegotiationChatScreen(negotiationId: id);
+        },
+      ),
+      GoRoute(
+        path: '/transaksi/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return TransactionDetailScreen(transactionId: id);
         },
       ),
     ],

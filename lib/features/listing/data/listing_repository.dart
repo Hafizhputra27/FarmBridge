@@ -33,6 +33,14 @@ class ListingRepository {
     return query.order('created_at', ascending: false);
   }
 
+  Future<Map<String, dynamic>> getListingDetail(String id) {
+    return _client
+        .from('listings')
+        .select('*, farmer_profiles(nama, lokasi)')
+        .eq('id', id)
+        .single();
+  }
+
   Future<List<Map<String, dynamic>>> getMyListings(String farmerId) {
     return _client
         .from('listings')

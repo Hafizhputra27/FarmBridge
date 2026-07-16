@@ -196,11 +196,12 @@ class _ListingCard extends StatelessWidget {
     final lokasi = farmerProfile?['lokasi']?.toString() ?? '';
     final namaFarmer = farmerProfile?['nama']?.toString() ?? '';
     final farmerId = listing['farmer_id']?.toString() ?? '';
+    final listingId = listing['id']?.toString() ?? '';
 
     return GestureDetector(
       onTap: () {
-        if (farmerId.isNotEmpty) {
-          context.push('/farmer-profile/$farmerId');
+        if (listingId.isNotEmpty) {
+          context.push('/listing/$listingId');
         }
       },
       child: Card(
