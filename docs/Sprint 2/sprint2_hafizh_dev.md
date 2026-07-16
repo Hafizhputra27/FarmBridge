@@ -27,8 +27,8 @@ Kalau dry-run gagal, jangan lanjut ke `main` — kembalikan ke Nevan.
 - **Kabari Fachri** begitu merge ke `main` selesai — FG-11 (Sprint 3) butuh Auth (FG-3) live untuk `signInAnonymously()`.
 
 ## Definition of Done
-- [ ] `hafizh_dev` berhasil merge `nevan_dev` (FG-3 + FG-4) dan `supabase db push --dry-run` hijau sebelum masuk `main`
-- [ ] Draft dataset seed FG-7 siap dipakai di Sprint 3 (opsional, tapi disarankan)
+- [x] `hafizh_dev` berhasil merge `nevan_dev` (FG-3 + FG-4) dan masuk `main` — terkonfirmasi via git history + CI/CD "Deploy Supabase" hijau di `main`
+- [x] Draft dataset seed FG-7 siap dipakai di Sprint 3 (opsional, tapi disarankan) — terpenuhi langsung lewat eksekusi FG-7 di Sprint 3 (18 baris, 6 kategori × 3 region), bukan cuma draft
 
 ## Referensi PRD
 §2.3, §9 (konteks price_reference_data untuk prep FG-7), §12 (NFR — Observability).

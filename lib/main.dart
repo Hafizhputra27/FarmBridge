@@ -20,7 +20,11 @@ Future<void> main() async {
     debugPrint('Supabase init skipped: $e');
   }
 
-  await FcmService().initialize();
+  try {
+    await FcmService().initialize();
+  } catch (e) {
+    debugPrint('FCM init skipped (emulator/no Google Play): $e');
+  }
 
   // Restore role/session dari SharedPreferences sebelum frame pertama —
   // supaya GoRouter tidak sempat redirect ke role-picker padahal user

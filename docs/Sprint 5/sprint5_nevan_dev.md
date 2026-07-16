@@ -18,11 +18,11 @@ FG-23 (Hafizh) sudah selesai penuh di Sprint 4 — kamu tinggal **import functio
 ## Task Checklist
 
 ### FG-22 — POST /negotiations + /messages + state machine
-- [ ] `POST /negotiations`: `{ listing_id, buyer_id, initial_price, quantity }` → `{ negotiation_id, recommended_price, status:'open', expires_at }`; 400 jika `initial_price ≤ 0` atau `quantity > listings.quantity_available`
-- [ ] `POST /negotiations/:id/messages`: `{ sender_id, message_text?, offer_price?, action_type }` → `{ message_id, negotiation_status }`; 409 jika negotiation sudah `accepted`/`declined`/`expired`
-- [ ] `GET /negotiations/:id`: detail + `messages[]`; 403 jika requester bukan peserta
-- [ ] Implementasi prinsip **"pihak penerima"** (§5.1): validasi di backend siapa yang boleh Accept/Decline/Counter berikutnya — bukan pengirim `initial_price`/`current_offer_price` terakhir. WAJIB divalidasi backend, bukan cuma disembunyikan di UI (Fachri tetap butuh guard sisi client di FG-25/FG-26, Sprint 6, tapi jangan andalkan itu sebagai satu-satunya proteksi)
-- [ ] Inventory locking: `quantity_available` TIDAK berkurang saat `OPEN`/`COUNTERED`, baru berkurang atomik saat `ACCEPTED` (dalam transaksi DB yang sama), rollback kalau `REJECTED` — ini yang nanti digeneralisasi jadi FG-35
+- [x] `POST /negotiations`: `{ listing_id, buyer_id, initial_price, quantity }` → `{ negotiation_id, recommended_price, status:'open', expires_at }`; 400 jika `initial_price ≤ 0` atau `quantity > listings.quantity_available`
+- [x] `POST /negotiations/:id/messages`: `{ sender_id, message_text?, offer_price?, action_type }` → `{ message_id, negotiation_status }`; 409 jika negotiation sudah `accepted`/`declined`/`expired`
+- [x] `GET /negotiations/:id`: detail + `messages[]`; 403 jika requester bukan peserta
+- [x] Implementasi prinsip **"pihak penerima"** (§5.1): validasi di backend siapa yang boleh Accept/Decline/Counter berikutnya — bukan pengirim `initial_price`/`current_offer_price` terakhir. WAJIB divalidasi backend, bukan cuma disembunyikan di UI (Fachri tetap butuh guard sisi client di FG-25/FG-26, Sprint 6, tapi jangan andalkan itu sebagai satu-satunya proteksi)
+- [x] Inventory locking: `quantity_available` TIDAK berkurang saat `OPEN`/`COUNTERED`, baru berkurang atomik saat `ACCEPTED` (dalam transaksi DB yang sama), rollback kalau `REJECTED` — ini yang nanti digeneralisasi jadi FG-35
 
 **Detail teknis — pola state transition**:
 ```
@@ -35,14 +35,14 @@ OPEN/COUNTERED → EXPIRED : 6 jam tanpa respons (FG-24, Sprint 6)
 Pengecualian: Buy Now (FG-29, Sprint 6) melompat langsung ke ACCEPTED tanpa OPEN — desain schema/function-mu jangan sampai mengasumsikan semua negotiation pasti mulai dari OPEN.
 
 ### FG-58 — GET /negotiations (gap-fill, subtask FG-22)
-- [ ] Query param opsional `status` (mis. `open,countered,accepted`), kembalikan array negotiation milik requester (`buyer_id` atau `farmer_id` = `auth.uid()`), terurut `updated_at desc`
-- [ ] RLS dari Sprint 2 (FG-3) otomatis memfilter kepemilikan — tidak perlu parameter `user_id` manual
+- [x] Query param opsional `status` (mis. `open,countered,accepted`), kembalikan array negotiation milik requester (`buyer_id` atau `farmer_id` = `auth.uid()`), terurut `updated_at desc`
+- [x] RLS dari Sprint 2 (FG-3) otomatis memfilter kepemilikan — tidak perlu parameter `user_id` manual
 
 ### FG-35 — Inventory locking atomik (generalisasi)
-- [ ] Ekstrak dari FG-22: `quantity_available` berkurang **hanya** saat negotiation `ACCEPTED` & `transactions.PENDING` terbentuk, dalam **satu transaksi database** (bukan 2 query terpisah)
-- [ ] Function baru: rollback `quantity_available` kalau transaction kemudian `REJECTED`
-- [ ] Pastikan validasi `quantity > listings.quantity_available` tetap bisa gagal untuk dua negosiasi/Buy Now paralel pada listing sama (first-accepted-wins, §11)
-- [ ] Expose 2 function reusable: `lockInventoryOnAccept(negotiation_id)` dan `releaseInventoryOnReject(transaction_id)` — dipakai FG-29 (Buy Now, Sprint 6, kamu sendiri) dan FG-33 (Reject, Sprint 7 — beda 2 sprint, bukan lagi koordinasi Hari-1, tinggal expose function-nya dengan rapi)
+- [x] Ekstrak dari FG-22: `quantity_available` berkurang **hanya** saat negotiation `ACCEPTED` & `transactions.PENDING` terbentuk, dalam **satu transaksi database** (bukan 2 query terpisah)
+- [x] Function baru: rollback `quantity_available` kalau transaction kemudian `REJECTED`
+- [x] Pastikan validasi `quantity > listings.quantity_available` tetap bisa gagal untuk dua negosiasi/Buy Now paralel pada listing sama (first-accepted-wins, §11)
+- [x] Expose 2 function reusable: `lockInventoryOnAccept(negotiation_id)` dan `releaseInventoryOnReject(transaction_id)` — dipakai FG-29 (Buy Now, Sprint 6, kamu sendiri) dan FG-33 (Reject, Sprint 7 — beda 2 sprint, bukan lagi koordinasi Hari-1, tinggal expose function-nya dengan rapi)
 
 **Test race condition** (paling kritis di ticket ini):
 ```
@@ -69,12 +69,12 @@ supabase/functions/_shared/inventory-locking.ts  (FG-35, dipakai bareng sprint d
 - **Begitu FG-35 selesai**: function rollback-nya akan dipakai FG-33 (Sprint 7) — tidak perlu koordinasi mendesak sekarang, cukup pastikan function-nya terdokumentasi rapi.
 
 ## Definition of Done
-- [ ] `quantity > listings.quantity_available` → 400 saat `POST /negotiations`
-- [ ] Counter offer dari buyer → status `COUNTERED`, `counter_count+1`, giliran pindah ke farmer
-- [ ] Pihak pengirim counter terakhir TIDAK bisa Accept tawarannya sendiri
-- [ ] `GET /negotiations` cuma mengembalikan milik requester (RLS), terurut `updated_at desc`
-- [ ] Dua negotiation/Buy Now paralel untuk listing & quantity sama → yang kedua gagal 409 setelah yang pertama accepted
-- [ ] Transaction REJECTED → `quantity_available` listing kembali ke angka sebelum ACCEPTED
+- [x] `quantity > listings.quantity_available` → 400 saat `POST /negotiations`
+- [x] Counter offer dari buyer → status `COUNTERED`, `counter_count+1`, giliran pindah ke farmer
+- [x] Pihak pengirim counter terakhir TIDAK bisa Accept tawarannya sendiri
+- [x] `GET /negotiations` cuma mengembalikan milik requester (RLS), terurut `updated_at desc`
+- [x] Dua negotiation/Buy Now paralel untuk listing & quantity sama → yang kedua gagal 409 setelah yang pertama accepted
+- [x] Transaction REJECTED → `quantity_available` listing kembali ke angka sebelum ACCEPTED
 
 ## Referensi PRD
 §5, §5.1, §8, §9, §10.3, §11, §12.

@@ -3,59 +3,75 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 
-class NameInputScreen extends ConsumerStatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   final String role;
 
-  const NameInputScreen({super.key, required this.role});
+  const LoginScreen({super.key, required this.role});
 
   @override
-  ConsumerState<NameInputScreen> createState() => _NameInputScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _NameInputScreenState extends ConsumerState<NameInputScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
-  String get _labelText => widget.role == 'farmer'
-      ? 'Nama Petani / Kebun'
-      : 'Nama Bisnis / Institusi';
-
-  String get _titleText =>
-      widget.role == 'farmer' ? 'Halo, Petani!' : 'Halo, Pembeli!';
+  String get _titleText => widget.role == 'farmer'
+      ? 'Login sebagai Petani'
+      : 'Login sebagai Pembeli';
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final name = _nameController.text.trim();
     final notifier = ref.read(authProvider.notifier);
-    await notifier.saveProfile(role: widget.role, name: name);
+    await notifier.signInWithPassword(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+    );
 
-    final error = ref.read(authProvider).error;
-    if (error != null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error), backgroundColor: Colors.red),
-        );
-      }
-      return;
-    }
+    final state = ref.read(authProvider);
+    if (state.error != null) return;
 
-    if (mounted) {
-      context.go(widget.role == 'farmer' ? '/farmer' : '/buyer');
+    if (mounted && state.role != null) {
+      context.go(state.role == 'farmer' ? '/farmer/listings' : '/buyer');
     }
+  }
+
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.white70),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.white),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.redAccent),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.redAccent),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = ref.watch(
-      authProvider.select((s) => s.isLoading),
-    );
+    final isLoading = ref.watch(authProvider.select((s) => s.isLoading));
+    final error = ref.watch(authProvider.select((s) => s.error));
 
     return Scaffold(
       backgroundColor: Colors.green.shade800,
@@ -82,48 +98,41 @@ class _NameInputScreenState extends ConsumerState<NameInputScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Masukkan nama Anda',
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
-                ),
                 const SizedBox(height: 32),
                 TextFormField(
-                  controller: _nameController,
+                  controller: _emailController,
                   autofocus: true,
+                  keyboardType: TextInputType.emailAddress,
                   style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    labelText: _labelText,
-                    labelStyle: const TextStyle(color: Colors.white70),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.4),
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.white),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.redAccent),
-                    ),
-                    focusedErrorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.redAccent),
-                    ),
-                  ),
+                  decoration: _inputDecoration('Email'),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Nama tidak boleh kosong';
-                    }
-                    if (value.trim().length < 2) {
-                      return 'Nama minimal 2 karakter';
+                      return 'Email tidak boleh kosong';
                     }
                     return null;
                   },
                 ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration('Password'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Password tidak boleh kosong';
+                    }
+                    return null;
+                  },
+                ),
+                if (error != null) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    error,
+                    style: const TextStyle(color: Colors.redAccent),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
                 const SizedBox(height: 24),
                 SizedBox(
                   height: 48,
@@ -143,7 +152,7 @@ class _NameInputScreenState extends ConsumerState<NameInputScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Text(
-                            'Mulai',
+                            'Login',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
