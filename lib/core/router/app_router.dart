@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/role_picker_screen.dart';
 import '../../features/auth/screens/name_input_screen.dart';
+import '../../features/profile/screens/farmer_profile_screen.dart';
+import '../../features/profile/screens/buyer_profile_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -27,8 +29,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         return role == 'farmer' ? '/farmer' : '/buyer';
       }
 
-      final isBuyerRoute = state.matchedLocation.startsWith('/buyer');
-      final isFarmerRoute = state.matchedLocation.startsWith('/farmer');
+      // Exact-or-slash, bukan raw prefix — '/farmer-profile/:id' tidak
+      // boleh ke-anggap farmer-only route oleh startsWith('/farmer') mentah.
+      final isBuyerRoute = state.matchedLocation == '/buyer' ||
+          state.matchedLocation.startsWith('/buyer/');
+      final isFarmerRoute = state.matchedLocation == '/farmer' ||
+          state.matchedLocation.startsWith('/farmer/');
       if (isBuyerRoute && role != 'buyer') return '/farmer';
       if (isFarmerRoute && role != 'farmer') return '/buyer';
       return null;
@@ -51,6 +57,16 @@ final routerProvider = Provider<GoRouter>((ref) {
           ...buyerRoutes,
           ...farmerRoutes,
         ],
+      ),
+      GoRoute(
+        path: '/farmer-profile/:id',
+        builder: (context, state) =>
+            FarmerProfileScreen(farmerId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/buyer-profile/:id',
+        builder: (context, state) =>
+            BuyerProfileScreen(buyerId: state.pathParameters['id']!),
       ),
     ],
   );
