@@ -95,19 +95,31 @@ class NegotiationRepository {
         .order('created_at');
   }
 
-  Future<void> sendMessage({
+  Future<Map<String, dynamic>> sendMessage({
     required String negotiationId,
     required String senderId,
     required String actionType,
     String? messageText,
     double? offerPrice,
-  }) {
-    return _client.from('negotiation_messages').insert({
-      'negotiation_id': negotiationId,
-      'sender_id': senderId,
-      'action_type': actionType,
-      'message_text': messageText,
-      'offer_price': offerPrice,
-    });
+  }) async {
+    try {
+      final res = await _client.functions.invoke(
+        'negotiations/$negotiationId/messages',
+        method: HttpMethod.post,
+        body: {
+          'sender_id': senderId,
+          'action_type': actionType,
+          'message_text': ?messageText,
+          'offer_price': ?offerPrice,
+        },
+      );
+      return res.data as Map<String, dynamic>;
+    } on FunctionException catch (e) {
+      final details = e.details;
+      final message = (details is Map && details['error'] != null)
+          ? details['error'].toString()
+          : 'Gagal mengirim (${e.status})';
+      throw Exception(message);
+    }
   }
 }
