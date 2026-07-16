@@ -6,6 +6,12 @@ import '../../features/auth/screens/role_picker_screen.dart';
 import '../../features/auth/screens/name_input_screen.dart';
 import '../../features/profile/screens/farmer_profile_screen.dart';
 import '../../features/profile/screens/buyer_profile_screen.dart';
+import '../../features/listing/screens/my_listings_screen.dart';
+import '../../features/listing/screens/create_listing_screen.dart';
+import '../../features/listing/screens/buyer_home_feed_screen.dart';
+import '../../features/listing/screens/search_filter_screen.dart';
+import '../../features/negotiation/screens/negotiation_chat_screen.dart';
+import '../../features/negotiation/screens/chat_inbox_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -68,6 +74,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) =>
             BuyerProfileScreen(buyerId: state.pathParameters['id']!),
       ),
+      GoRoute(
+        path: '/negosiasi/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return NegotiationChatScreen(negotiationId: id);
+        },
+      ),
+      GoRoute(
+        path: '/percakapan',
+        builder: (context, state) => const ChatInboxScreen(),
+      ),
     ],
   );
 });
@@ -75,8 +92,13 @@ final routerProvider = Provider<GoRouter>((ref) {
 final buyerRoutes = <RouteBase>[
   GoRoute(
     path: '/buyer',
-    builder: (context, state) =>
-        const PlaceholderScreen(title: 'Buyer Home'),
+    builder: (context, state) => const BuyerHomeFeedScreen(),
+    routes: [
+      GoRoute(
+        path: 'search',
+        builder: (context, state) => const SearchFilterScreen(),
+      ),
+    ],
   ),
 ];
 
@@ -85,6 +107,25 @@ final farmerRoutes = <RouteBase>[
     path: '/farmer',
     builder: (context, state) =>
         const PlaceholderScreen(title: 'Farmer Home'),
+    routes: [
+      GoRoute(
+        path: 'listings',
+        builder: (context, state) => const MyListingsScreen(),
+        routes: [
+          GoRoute(
+            path: 'create',
+            builder: (context, state) => const CreateListingScreen(),
+          ),
+          GoRoute(
+            path: ':id/edit',
+            builder: (context, state) {
+              final listing = state.extra as Map<String, dynamic>;
+              return CreateListingScreen(listing: listing);
+            },
+          ),
+        ],
+      ),
+    ],
   ),
 ];
 
