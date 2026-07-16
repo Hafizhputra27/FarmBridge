@@ -16,7 +16,7 @@ void main() {
 
   group('resolveRedirect — role ada, masih di onboarding route', () {
     test('didorong ke home sesuai role', () {
-      expect(resolveRedirect('farmer', '/role-picker'), '/farmer');
+      expect(resolveRedirect('farmer', '/role-picker'), '/farmer/listings');
       expect(resolveRedirect('buyer', '/login'), '/buyer');
     });
   });
@@ -24,11 +24,11 @@ void main() {
   group('resolveRedirect — cross-role guard untuk /buyer & /farmer', () {
     test('buyer diblokir dari /farmer, farmer diblokir dari /buyer', () {
       expect(resolveRedirect('buyer', '/farmer'), '/buyer');
-      expect(resolveRedirect('farmer', '/buyer'), '/farmer');
+      expect(resolveRedirect('farmer', '/buyer'), '/farmer/listings');
     });
 
     test('nested route Fachri ikut ke-guard (exact-or-slash, bukan raw prefix)', () {
-      expect(resolveRedirect('farmer', '/buyer/search'), '/farmer');
+      expect(resolveRedirect('farmer', '/buyer/search'), '/farmer/listings');
       expect(resolveRedirect('buyer', '/farmer/listings'), '/buyer');
       expect(resolveRedirect('buyer', '/farmer/listings/create'), '/buyer');
       // role yang benar tidak boleh ke-redirect

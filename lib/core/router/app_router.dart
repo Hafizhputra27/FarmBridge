@@ -31,7 +31,7 @@ String? resolveRedirect(String? role, String matchedLocation) {
   // jangan biarkan nyangkut di layar onboarding (initialLocation app
   // selalu '/role-picker', jadi restore session butuh redirect ini).
   if (isOnboardingRoute) {
-    return role == 'farmer' ? '/farmer' : '/buyer';
+    return role == 'farmer' ? '/farmer/listings' : '/buyer';
   }
 
   // Exact-or-slash, bukan raw prefix — '/farmer-profile/:id' tidak
@@ -40,7 +40,7 @@ String? resolveRedirect(String? role, String matchedLocation) {
       matchedLocation == '/buyer' || matchedLocation.startsWith('/buyer/');
   final isFarmerRoute =
       matchedLocation == '/farmer' || matchedLocation.startsWith('/farmer/');
-  if (isBuyerRoute && role != 'buyer') return '/farmer';
+  if (isBuyerRoute && role != 'buyer') return '/farmer/listings';
   if (isFarmerRoute && role != 'farmer') return '/buyer';
   return null;
 }

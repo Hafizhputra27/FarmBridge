@@ -41,7 +41,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (state.error != null) return;
 
     if (mounted && state.role != null) {
-      context.go(state.role == 'farmer' ? '/farmer' : '/buyer');
+      context.go(state.role == 'farmer' ? '/farmer/listings' : '/buyer');
     }
   }
 
