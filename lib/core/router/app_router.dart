@@ -1,19 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-final currentUserRoleProvider = Provider<String?>((ref) {
-  return null;
-});
+import '../../features/auth/providers/auth_provider.dart';
+import '../../features/auth/screens/role_picker_screen.dart';
+import '../../features/auth/screens/name_input_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/role-picker',
     redirect: (context, state) {
       final role = ref.read(currentUserRoleProvider);
+      final isOnboardingRoute = state.matchedLocation == '/role-picker' ||
+          state.matchedLocation == '/name-input';
+
+      // Belum punya role (baru di-set setelah NameInputScreen submit) —
+      // biarkan tetap di alur onboarding, jangan dipaksa balik ke
+      // role-picker di tengah alurnya sendiri (dulu ini bikin loop).
+      if (role == null) {
+        return isOnboardingRoute ? null : '/role-picker';
+      }
+
+      // Role sudah ada (baru dipilih, atau di-restore dari session lama) —
+      // jangan biarkan nyangkut di layar onboarding (initialLocation app
+      // selalu '/role-picker', jadi restore session butuh redirect ini).
+      if (isOnboardingRoute) {
+        return role == 'farmer' ? '/farmer' : '/buyer';
+      }
+
       final isBuyerRoute = state.matchedLocation.startsWith('/buyer');
       final isFarmerRoute = state.matchedLocation.startsWith('/farmer');
-      if (role == null) return '/role-picker';
       if (isBuyerRoute && role != 'buyer') return '/farmer';
       if (isFarmerRoute && role != 'farmer') return '/buyer';
       return null;
@@ -21,8 +36,14 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/role-picker',
-        builder: (context, state) =>
-            const PlaceholderScreen(title: 'Role Picker'),
+        builder: (context, state) => const RolePickerScreen(),
+      ),
+      GoRoute(
+        path: '/name-input',
+        builder: (context, state) {
+          final role = state.extra as String;
+          return NameInputScreen(role: role);
+        },
       ),
       ShellRoute(
         builder: (context, state, child) => child,

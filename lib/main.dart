@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/router/app_router.dart';
 import 'core/services/fcm_service.dart';
+import 'features/auth/providers/auth_provider.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -21,7 +22,18 @@ Future<void> main() async {
 
   await FcmService().initialize();
 
-  runApp(const ProviderScope(child: FarmBridgeApp()));
+  // Restore role/session dari SharedPreferences sebelum frame pertama —
+  // supaya GoRouter tidak sempat redirect ke role-picker padahal user
+  // sudah pernah login (lihat AuthNotifier.initialize()).
+  final container = ProviderContainer();
+  await container.read(authProvider.notifier).initialize();
+
+  runApp(
+    UncontrolledProviderScope(
+      container: container,
+      child: const FarmBridgeApp(),
+    ),
+  );
 }
 
 class FarmBridgeApp extends ConsumerWidget {
