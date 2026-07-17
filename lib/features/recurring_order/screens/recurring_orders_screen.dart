@@ -1,40 +1,43 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/app_theme.dart';
-import '../../../core/format.dart';
-import '../data/negotiation_repository.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../data/recurring_order_repository.dart';
 
-class ChatInboxScreen extends StatefulWidget {
-  const ChatInboxScreen({super.key});
+class RecurringOrdersScreen extends ConsumerStatefulWidget {
+  const RecurringOrdersScreen({super.key});
 
   @override
-  State<ChatInboxScreen> createState() => _ChatInboxScreenState();
+  ConsumerState<RecurringOrdersScreen> createState() =>
+      _RecurringOrdersScreenState();
 }
 
-class _ChatInboxScreenState extends State<ChatInboxScreen> {
-  final _repo = NegotiationRepository();
-  List<Map<String, dynamic>> _negotiations = [];
+class _RecurringOrdersScreenState
+    extends ConsumerState<RecurringOrdersScreen> {
+  final _repo = RecurringOrderRepository();
+  List<Map<String, dynamic>> _orders = [];
   bool _isLoading = true;
   String? _error;
 
   @override
   void initState() {
     super.initState();
-    _loadInbox();
+    _load();
   }
 
-  Future<void> _loadInbox() async {
+  Future<void> _load() async {
+    final userId = ref.read(authProvider).userId;
+    if (userId == null) return;
+
     setState(() {
       _isLoading = true;
       _error = null;
     });
-
     try {
-      final data = await _repo.getMyNegotiations();
+      final data = await _repo.getMyRecurringOrders(userId);
       setState(() {
-        _negotiations = data;
+        _orders = data;
         _isLoading = false;
       });
     } catch (e) {
@@ -48,7 +51,7 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Percakapan')),
+      appBar: AppBar(title: const Text('Recurring Order Saya')),
       body: _buildBody(),
     );
   }
@@ -57,7 +60,6 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-
     if (_error != null) {
       return Center(
         child: Column(
@@ -65,21 +67,20 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
           children: [
             Text('Gagal memuat: $_error'),
             const SizedBox(height: 16),
-            ElevatedButton(onPressed: _loadInbox, child: const Text('Coba Lagi')),
+            ElevatedButton(onPressed: _load, child: const Text('Coba Lagi')),
           ],
         ),
       );
     }
-
-    if (_negotiations.isEmpty) {
+    if (_orders.isEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey.shade400),
+            Icon(Icons.autorenew, size: 64, color: Colors.grey.shade400),
             const SizedBox(height: 16),
             Text(
-              'Belum ada percakapan',
+              'Belum ada recurring order',
               style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
             ),
           ],
@@ -87,18 +88,19 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
       );
     }
 
-    final myId = Supabase.instance.client.auth.currentUser?.id;
+    final currentUserId = ref.read(authProvider).userId;
+
     return RefreshIndicator(
-      onRefresh: _loadInbox,
+      onRefresh: _load,
       child: ListView.builder(
         padding: const EdgeInsets.all(12),
-        itemCount: _negotiations.length,
+        itemCount: _orders.length,
         itemBuilder: (context, index) {
-          final item = _negotiations[index];
-          return _InboxItem(
-            negotiation: item,
-            myId: myId,
-            onTap: () => context.push('/negosiasi/${item['id']}'),
+          final item = _orders[index];
+          return _RecurringOrderItem(
+            order: item,
+            currentUserId: currentUserId,
+            onTap: () => context.push('/recurring-orders/${item['id']}'),
           );
         },
       ),
@@ -106,39 +108,34 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
   }
 }
 
-class _InboxItem extends StatelessWidget {
-  final Map<String, dynamic> negotiation;
-  final String? myId;
+class _RecurringOrderItem extends StatelessWidget {
+  final Map<String, dynamic> order;
+  final String? currentUserId;
   final VoidCallback onTap;
 
-  const _InboxItem({
-    required this.negotiation,
-    required this.myId,
+  const _RecurringOrderItem({
+    required this.order,
+    required this.currentUserId,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final listing = negotiation['listings'] as Map<String, dynamic>? ?? {};
-    final farmerProfile = negotiation['farmer_profiles'] as Map<String, dynamic>? ?? {};
-    final buyerProfile = negotiation['buyer_profiles'] as Map<String, dynamic>? ?? {};
-    final status = negotiation['status']?.toString() ?? 'open';
+    final listing = order['listings'] as Map<String, dynamic>? ?? {};
+    final farmerProfile = order['farmer_profiles'] as Map<String, dynamic>?;
+    final buyerProfile = order['buyer_profiles'] as Map<String, dynamic>?;
+    final status = order['status']?.toString() ?? 'active';
     final fotoUrl = listing['foto_url']?.toString();
 
-    // Tampilkan LAWAN bicara: kalau aku farmer -> nama buyer, sebaliknya.
-    // Dulu selalu ambil nama farmer, jadi farmer lihat namanya sendiri.
-    final iAmFarmer = myId != null && negotiation['farmer_id']?.toString() == myId;
-    final counterpartName = iAmFarmer
-        ? (buyerProfile['nama_institusi']?.toString().isNotEmpty == true
-            ? buyerProfile['nama_institusi'].toString()
-            : 'Pembeli')
-        : (farmerProfile['nama']?.toString().isNotEmpty == true
-            ? farmerProfile['nama'].toString()
-            : 'Petani');
+    // Tampilkan pihak LAIN, bukan diri sendiri — kalau user saat ini
+    // adalah farmer di order ini, tampilkan nama buyer, dan sebaliknya.
+    final isCurrentUserFarmer = order['farmer_id'] == currentUserId;
+    final buyerName = buyerProfile?['nama_institusi']?.toString() ?? '';
+    final farmerName = farmerProfile?['nama']?.toString() ?? '';
+    final counterpartName = isCurrentUserFarmer ? buyerName : farmerName;
 
-    final listingTitle = listing['title']?.toString() ?? '';
-    final harga = (listing['harga_per_unit'] as num?) ?? 0;
-    final unit = listing['unit']?.toString() ?? 'kg';
+    final listingTitle =
+        listing['title']?.toString() ?? listing['category']?.toString() ?? '';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -158,14 +155,18 @@ class _InboxItem extends StatelessWidget {
                         width: 56,
                         height: 56,
                         fit: BoxFit.cover,
-                        placeholder: (_, _) =>
-                            Container(width: 56, height: 56, color: Colors.grey.shade200),
-                        errorWidget: (_, _, _) =>
-                            Container(width: 56, height: 56, color: Colors.grey.shade200,
-                                child: const Icon(Icons.image, color: Colors.grey)),
+                        placeholder: (_, _) => Container(
+                            width: 56, height: 56, color: Colors.grey.shade200),
+                        errorWidget: (_, _, _) => Container(
+                            width: 56,
+                            height: 56,
+                            color: Colors.grey.shade200,
+                            child: const Icon(Icons.image, color: Colors.grey)),
                       )
                     : Container(
-                        width: 56, height: 56, color: Colors.grey.shade200,
+                        width: 56,
+                        height: 56,
+                        color: Colors.grey.shade200,
                         child: const Icon(Icons.image, color: Colors.grey),
                       ),
               ),
@@ -179,18 +180,22 @@ class _InboxItem extends StatelessWidget {
                         Expanded(
                           child: Text(
                             counterpartName,
-                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w600, fontSize: 14),
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
                             color: _chipColor(status),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             _statusLabel(status),
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
+                            style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
                                 color: _statusTextColor(status)),
                           ),
                         ),
@@ -202,12 +207,8 @@ class _InboxItem extends StatelessWidget {
                         overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 4),
                     Text(
-                      '${formatRupiah(harga)}/$unit',
-                      style: const TextStyle(
-                        color: AppTheme.brandGreen,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
+                      'Next order: ${order['next_order_date']}',
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                     ),
                   ],
                 ),
@@ -220,29 +221,23 @@ class _InboxItem extends StatelessWidget {
   }
 
   Color _chipColor(String status) => switch (status) {
-        'open' => Colors.green.shade100,
-        'countered' => Colors.orange.shade100,
-        'accepted' => Colors.blue.shade100,
-        'declined' => Colors.red.shade100,
-        'expired' => Colors.grey.shade200,
+        'active' => Colors.green.shade100,
+        'paused' => Colors.orange.shade100,
+        'cancelled' => Colors.red.shade100,
         _ => Colors.grey.shade100,
       };
 
   Color _statusTextColor(String status) => switch (status) {
-        'open' => Colors.green.shade800,
-        'countered' => Colors.orange.shade800,
-        'accepted' => Colors.blue.shade800,
-        'declined' => Colors.red.shade800,
-        'expired' => Colors.grey.shade700,
+        'active' => Colors.green.shade800,
+        'paused' => Colors.orange.shade800,
+        'cancelled' => Colors.red.shade800,
         _ => Colors.grey.shade700,
       };
 
   String _statusLabel(String status) => switch (status) {
-        'open' => 'Terbuka',
-        'countered' => 'Counter',
-        'accepted' => 'Diterima',
-        'declined' => 'Ditolak',
-        'expired' => 'Expired',
+        'active' => 'Aktif',
+        'paused' => 'Dijeda',
+        'cancelled' => 'Dibatalkan',
         _ => status,
       };
 }

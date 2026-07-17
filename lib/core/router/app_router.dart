@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/auth/providers/auth_provider.dart';
@@ -12,6 +11,12 @@ import '../../features/listing/screens/buyer_home_feed_screen.dart';
 import '../../features/listing/screens/search_filter_screen.dart';
 import '../../features/negotiation/screens/negotiation_chat_screen.dart';
 import '../../features/negotiation/screens/chat_inbox_screen.dart';
+import '../../features/farmer/screens/farmer_dashboard_screen.dart';
+import '../../features/listing/screens/listing_detail_screen.dart';
+import '../../features/transaction/screens/transaction_detail_screen.dart';
+import '../../features/transaction/screens/orders_screen.dart';
+import '../../features/recurring_order/screens/recurring_orders_screen.dart';
+import '../../features/recurring_order/screens/recurring_order_detail_screen.dart';
 import '../widgets/main_shell.dart';
 
 // Pure — diextract dari redirect callback supaya bisa diunit-test tanpa
@@ -84,6 +89,15 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/percakapan',
             builder: (context, state) => const ChatInboxScreen(),
           ),
+          GoRoute(
+            path: '/pesanan',
+            builder: (context, state) => const OrdersScreen(),
+          ),
+          GoRoute(
+            path: '/listing/:id',
+            builder: (context, state) =>
+                ListingDetailScreen(listingId: state.pathParameters['id']!),
+          ),
         ],
       ),
       // Full-screen, sengaja di luar shell — chat detail tidak butuh
@@ -93,6 +107,24 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final id = state.pathParameters['id']!;
           return NegotiationChatScreen(negotiationId: id);
+        },
+      ),
+      GoRoute(
+        path: '/transaksi/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return TransactionDetailScreen(transactionId: id);
+        },
+      ),
+      GoRoute(
+        path: '/recurring-orders',
+        builder: (context, state) => const RecurringOrdersScreen(),
+      ),
+      GoRoute(
+        path: '/recurring-orders/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return RecurringOrderDetailScreen(recurringOrderId: id);
         },
       ),
     ],
@@ -115,9 +147,13 @@ final buyerRoutes = <RouteBase>[
 final farmerRoutes = <RouteBase>[
   GoRoute(
     path: '/farmer',
-    builder: (context, state) =>
-        const PlaceholderScreen(title: 'Farmer Home'),
+    redirect: (context, state) =>
+        state.matchedLocation == '/farmer' ? '/farmer/dashboard' : null,
     routes: [
+      GoRoute(
+        path: 'dashboard',
+        builder: (context, state) => const FarmerDashboardScreen(),
+      ),
       GoRoute(
         path: 'listings',
         builder: (context, state) => const MyListingsScreen(),
@@ -138,16 +174,3 @@ final farmerRoutes = <RouteBase>[
     ],
   ),
 ];
-
-class PlaceholderScreen extends StatelessWidget {
-  final String title;
-  const PlaceholderScreen({super.key, required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(child: Text('$title — placeholder')),
-    );
-  }
-}

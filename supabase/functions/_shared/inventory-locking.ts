@@ -57,18 +57,27 @@ export async function lockInventoryOnAcceptWithQuantity(
     return { success: false, error: "Stok tidak mencukupi — transaksi lain mungkin sudah mengambil (first-accepted-wins)" };
   }
 
+  // .select().single() wajib -- tanpa itu PostgREST balas sukses (204) walau
+  // 0 baris cocok dengan guard .eq("quantity_available", currentQty), jadi
+  // guard-nya jadi dekoratif (request kalah race tetap lolos ke tahap insert
+  // transaksi). .single() memaksa error kalau 0 baris ter-update.
   const { error: deductErr } = await supabase
     .from("listings")
     .update({ quantity_available: currentQty - quantity })
     .eq("id", neg.listing_id)
-    .eq("quantity_available", currentQty); // optimistic concurrency guard
+    .eq("quantity_available", currentQty) // optimistic concurrency guard
+    .select()
+    .single();
 
   if (deductErr) {
-    return { success: false, error: "Gagal mengurangi stok: " + deductErr.message };
+    return { success: false, error: "Stok tidak mencukupi — transaksi lain mungkin sudah mengambil (first-accepted-wins)" };
   }
 
   // 3. Buat transaction PENDING
   const totalAmount = quantity * Number(neg.current_offer_price);
+  // Konvensi sama dengan buy-now/index.ts:11 — H+7 dari tanggal accept.
+  const promised = new Date();
+  promised.setDate(promised.getDate() + 7);
   const { data: tx, error: txErr } = await supabase
     .from("transactions")
     .insert({
@@ -78,7 +87,7 @@ export async function lockInventoryOnAcceptWithQuantity(
       status: "pending",
       agreed_quantity: quantity,
       total_amount: totalAmount,
-      promised_delivery_date: null,
+      promised_delivery_date: promised.toISOString().slice(0, 10),
     })
     .select("id")
     .single();
@@ -137,4 +146,74 @@ export async function releaseInventoryOnReject(
   }
 
   return { success: true };
+}
+
+export async function lockInventoryForRecurringCycle(
+  supabase: SupabaseClient,
+  recurringOrder: {
+    id: string;
+    listing_id: string;
+    farmer_id: string;
+    buyer_id: string;
+    quantity: number;
+    locked_price: number;
+  },
+): Promise<LockInventoryResult> {
+  const { data: listing, error: listingErr } = await supabase
+    .from("listings")
+    .select("quantity_available")
+    .eq("id", recurringOrder.listing_id)
+    .single();
+
+  if (listingErr || !listing) {
+    return { success: false, error: "Listing tidak ditemukan" };
+  }
+
+  const currentQty = Number(listing.quantity_available);
+  const quantity = Number(recurringOrder.quantity);
+  if (currentQty < quantity) {
+    return { success: false, error: "Stok tidak mencukupi" };
+  }
+
+  // .select().single() wajib -- lihat catatan di lockInventoryOnAcceptWithQuantity.
+  const { error: deductErr } = await supabase
+    .from("listings")
+    .update({ quantity_available: currentQty - quantity })
+    .eq("id", recurringOrder.listing_id)
+    .eq("quantity_available", currentQty) // optimistic concurrency guard
+    .select()
+    .single();
+
+  if (deductErr) {
+    return { success: false, error: "Gagal mengurangi stok: " + deductErr.message };
+  }
+
+  const totalAmount = quantity * Number(recurringOrder.locked_price);
+  const promised = new Date();
+  promised.setDate(promised.getDate() + 7);
+
+  const { data: tx, error: txErr } = await supabase
+    .from("transactions")
+    .insert({
+      recurring_order_id: recurringOrder.id,
+      farmer_id: recurringOrder.farmer_id,
+      buyer_id: recurringOrder.buyer_id,
+      status: "pending",
+      agreed_quantity: quantity,
+      total_amount: totalAmount,
+      promised_delivery_date: promised.toISOString().slice(0, 10),
+    })
+    .select("id")
+    .single();
+
+  if (txErr) {
+    // Rollback: kembalikan stok
+    await supabase
+      .from("listings")
+      .update({ quantity_available: currentQty })
+      .eq("id", recurringOrder.listing_id);
+    return { success: false, error: "Gagal membuat transaksi: " + txErr.message };
+  }
+
+  return { success: true, transaction_id: tx.id };
 }

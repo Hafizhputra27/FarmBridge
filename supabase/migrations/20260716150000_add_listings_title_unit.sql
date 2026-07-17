@@ -1,0 +1,2 @@
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS title text;
+ALTER TABLE listings ADD COLUMN IF NOT EXISTS unit text;

@@ -49,6 +49,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return InputDecoration(
       labelText: label,
       labelStyle: const TextStyle(color: Colors.white70),
+      // filled:false — override inputDecorationTheme global (fill putih) yang
+      // di sini bikin field jadi blok putih dgn teks putih (tak terlihat).
+      filled: false,
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
@@ -74,15 +77,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final error = ref.watch(authProvider.select((s) => s.error));
 
     return Scaffold(
-      backgroundColor: Colors.green.shade800,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: isLoading ? null : () => context.pop(),
         ),
       ),
-      body: SafeArea(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF1B5E32), Color(0xFF14532D), Color(0xFF0F3D21)],
+          ),
+        ),
+        child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Form(
@@ -164,6 +176,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

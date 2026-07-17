@@ -1,22 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-async function lockInventory(supabase, negotiationId, quantity, farmerId, buyerId, price, listingId) {
-  const { data: list } = await supabase.from("listings").select("quantity_available").eq("id", listingId).single();
-  if (!list) return { success: false, error: "Listing tidak ditemukan" };
-  const currentQty = Number(list.quantity_available);
-  if (currentQty < quantity) return { success: false, error: "Stok tidak mencukupi (first-accepted-wins)" };
-  const { error: deductErr } = await supabase.from("listings").update({ quantity_available: currentQty - quantity }).eq("id", listingId);
-  if (deductErr) return { success: false, error: "Gagal mengurangi stok" };
-  const totalAmount = quantity * Number(price);
-  const promised = new Date(); promised.setDate(promised.getDate() + 7);
-  const { data: tx, error: txErr } = await supabase.from("transactions").insert({
-    negotiation_id: negotiationId, farmer_id: farmerId, buyer_id: buyerId,
-    status: "pending", agreed_quantity: quantity, total_amount: totalAmount,
-    promised_delivery_date: promised.toISOString().slice(0, 10)
-  }).select("id").single();
-  if (txErr) { await supabase.from("listings").update({ quantity_available: currentQty }).eq("id", listingId); return { success: false, error: "Gagal buat transaksi" }; }
-  return { success: true, transaction_id: tx.id };
-}
+import { lockInventoryOnAcceptWithQuantity } from "../_shared/inventory-locking.ts";
 
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") {
@@ -28,9 +11,14 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" } });
   }
 
+  // Ambil segmen terakhir non-kosong dari path, bukan regex prefix-strip.
+  // Prefix-strip (`/functions/v1/buy-now/`) rapuh — req.url runtime yang
+  // di-deploy tidak selalu menyertakan prefix penuh itu, jadi listingId
+  // ke-parse salah ("Listing tidak ditemukan" walau listing-nya ada).
+  // Pola ini konsisten dengan trust-metrics/buyer-metrics yang terbukti
+  // jalan, dan sudah diverifikasi fix di transactions-reject (FG-33).
   const url = new URL(req.url);
-  const pathParts = url.pathname.replace(/^\/functions\/v1\/buy-now\/?/, "").split("/").filter(Boolean);
-  const listingId = pathParts[0];
+  const listingId = url.pathname.split("/").filter(Boolean).pop();
 
   if (!listingId) {
     return new Response(JSON.stringify({ error: "listing_id wajib di URL" }), { status: 400, headers: { "Content-Type": "application/json" } });
@@ -93,12 +81,8 @@ Deno.serve(async (req: Request) => {
 
     if (negErr) throw new Error("Gagal buat negotiation: " + negErr.message);
 
-    // 3. Lock inventory + buat transaction (FG-35)
-    const lockResult = await lockInventory(
-      supabase, negotiation.id, quantity,
-      listing.farmer_id, buyer_id,
-      listing.harga_per_unit, listingId,
-    );
+    // 3. Lock inventory + buat transaction (FG-35) — reuse shared, guarded (fix FG-46 race condition)
+    const lockResult = await lockInventoryOnAcceptWithQuantity(supabase, negotiation.id, quantity);
 
     if (!lockResult.success) {
       // Rollback negotiation

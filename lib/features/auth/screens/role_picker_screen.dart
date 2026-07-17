@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/app_theme.dart';
 import '../providers/auth_provider.dart';
 
 class RolePickerScreen extends ConsumerWidget {
@@ -8,123 +9,174 @@ class RolePickerScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isLoading = ref.watch(
-      authProvider.select((s) => s.isLoading),
-    );
-    final error = ref.watch(
-      authProvider.select((s) => s.error),
-    );
+    final isLoading = ref.watch(authProvider.select((s) => s.isLoading));
+    final error = ref.watch(authProvider.select((s) => s.error));
 
     return Scaffold(
-      backgroundColor: Colors.green.shade800,
-      body: Stack(
-        children: [
-          SafeArea(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.agriculture, size: 64, color: Colors.white),
-                  const SizedBox(height: 16),
-                  Text(
-                    'FarmBridge',
-                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF1B5E32), AppTheme.brandGreen, Color(0xFF0F3D21)],
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              children: [
+                const Spacer(flex: 3),
+                Container(
+                  width: 88,
+                  height: 88,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.14),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
                   ),
-                  Text(
-                    'Pilih peran Anda',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Colors.white70,
-                        ),
+                  child: const Icon(Icons.eco, size: 44, color: Colors.white),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'FarmBridge',
+                  style: TextStyle(
+                    fontSize: 34,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: -0.5,
                   ),
-                  const SizedBox(height: 40),
-                  _RoleCard(
-                    icon: Icons.agriculture,
-                    label: 'Saya Petani',
-                    role: 'farmer',
-                    isLoading: isLoading,
-                    onTap: () => _handleRoleSelect(context, 'farmer'),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Marketplace hasil tani terpercaya —\nlangsung dari petani ke pembeli',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.4,
+                    color: Colors.white.withValues(alpha: 0.75),
                   ),
-                  const SizedBox(height: 16),
-                  _RoleCard(
-                    icon: Icons.storefront,
-                    label: 'Saya Pembeli',
-                    role: 'buyer',
-                    isLoading: isLoading,
-                    onTap: () => _handleRoleSelect(context, 'buyer'),
-                  ),
-                  if (error != null) ...[
-                    const SizedBox(height: 24),
-                    Text(
-                      error,
-                      style: const TextStyle(color: Colors.redAccent),
-                      textAlign: TextAlign.center,
+                ),
+                const Spacer(flex: 3),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Masuk sebagai',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white.withValues(alpha: 0.7),
                     ),
-                  ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _RoleCard(
+                  icon: Icons.agriculture,
+                  title: 'Petani',
+                  subtitle: 'Jual hasil panen langsung ke pembeli',
+                  enabled: !isLoading,
+                  onTap: () => context.push('/login', extra: 'farmer'),
+                ),
+                const SizedBox(height: 14),
+                _RoleCard(
+                  icon: Icons.storefront,
+                  title: 'Pembeli',
+                  subtitle: 'Beli hasil tani segar dengan harga terbaik',
+                  enabled: !isLoading,
+                  onTap: () => context.push('/login', extra: 'buyer'),
+                ),
+                if (error != null) ...[
+                  const SizedBox(height: 20),
+                  Text(
+                    error,
+                    style: const TextStyle(color: Color(0xFFFFCDD2)),
+                    textAlign: TextAlign.center,
+                  ),
                 ],
-              ),
+                const Spacer(flex: 2),
+                if (isLoading)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    ),
+                  ),
+              ],
             ),
           ),
-          if (isLoading)
-            Container(
-              color: Colors.black26,
-              child: const Center(child: CircularProgressIndicator()),
-            ),
-        ],
+        ),
       ),
     );
-  }
-
-  void _handleRoleSelect(BuildContext context, String role) {
-    context.push('/login', extra: role);
   }
 }
 
 class _RoleCard extends StatelessWidget {
   final IconData icon;
-  final String label;
-  final String role;
-  final bool isLoading;
+  final String title;
+  final String subtitle;
+  final bool enabled;
   final VoidCallback onTap;
 
   const _RoleCard({
     required this.icon,
-    required this.label,
-    required this.role,
-    required this.isLoading,
+    required this.title,
+    required this.subtitle,
+    required this.enabled,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: GestureDetector(
-        onTap: isLoading ? null : onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            color: Colors.white.withValues(alpha: 0.15),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
-          ),
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: enabled ? onTap : null,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              Icon(icon, size: 36, color: Colors.white),
+              Container(
+                width: 52,
+                height: 52,
+                decoration: const BoxDecoration(
+                  color: AppTheme.sage,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 26, color: AppTheme.brandGreen),
+              ),
               const SizedBox(width: 16),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        height: 1.3,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              const SizedBox(width: 8),
+              Icon(Icons.arrow_forward_ios,
+                  size: 16, color: Colors.grey.shade400),
             ],
           ),
         ),

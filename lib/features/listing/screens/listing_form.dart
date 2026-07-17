@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
+import '../../../core/app_theme.dart';
 import '../../auth/providers/auth_provider.dart';
 
 class ListingFormState {
@@ -41,8 +42,9 @@ class ListingFormState {
     priceController.text = price ?? '';
   }
 
+  // Foto opsional — dulu wajib, tapi upload storage bisa gagal & memblok
+  // publish total. Tanpa foto, feed tampil placeholder (sudah dihandle).
   bool get isValid =>
-      fotoUrl != null &&
       titleController.text.trim().isNotEmpty &&
       (double.tryParse(priceController.text) ?? 0) > 0 &&
       category != null &&
@@ -70,7 +72,8 @@ class ListingForm extends ConsumerStatefulWidget {
 class _ListingFormState extends ConsumerState<ListingForm> {
   final _picker = ImagePicker();
   final _unitOptions = ['kg', 'head', 'flat', 'box', 'ikat'];
-  final _categories = ['Beras', 'Cabai Merah', 'Bawang Merah', 'Tomat', 'Jagung', 'Kentang'];
+  // Taksonomi kategori konsisten dengan feed & search (Cabai/Sayuran/Umbi).
+  final _categories = ['Cabai', 'Sayuran', 'Umbi', 'Buah'];
   final _regions = ['Jawa Barat', 'Jawa Tengah', 'Jawa Timur'];
 
   late ListingFormState _s;
@@ -132,7 +135,6 @@ class _ListingFormState extends ConsumerState<ListingForm> {
 
   void _validateAndSubmit() async {
     setState(() {
-      _s.fotoError = _s.fotoUrl == null;
       _s.titleError = _s.titleController.text.trim().isEmpty;
       _s.priceError = (double.tryParse(_s.priceController.text) ?? 0) <= 0;
       _s.categoryError = _s.category == null;
@@ -243,7 +245,7 @@ class _ListingFormState extends ConsumerState<ListingForm> {
                     ? _validateAndSubmit
                     : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green.shade700,
+              backgroundColor: AppTheme.brandGreen,
               foregroundColor: Colors.white,
               disabledBackgroundColor: Colors.grey.shade300,
               shape: RoundedRectangleBorder(
@@ -359,7 +361,7 @@ class _ListingFormState extends ConsumerState<ListingForm> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: error != null ? Colors.red : Colors.green, width: 2),
+          borderSide: BorderSide(color: error != null ? Colors.red : AppTheme.brandGreen, width: 2),
         ),
         errorText: error,
       ),
@@ -392,7 +394,7 @@ class _ListingFormState extends ConsumerState<ListingForm> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: error != null ? Colors.red : Colors.green, width: 2),
+          borderSide: BorderSide(color: error != null ? Colors.red : AppTheme.brandGreen, width: 2),
         ),
         errorText: error,
       ),
@@ -419,7 +421,7 @@ class _ListingFormState extends ConsumerState<ListingForm> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: _s.priceError ? Colors.red : Colors.green, width: 2),
+                borderSide: BorderSide(color: _s.priceError ? Colors.red : AppTheme.brandGreen, width: 2),
               ),
               errorText: _s.priceError ? 'Harga harus > 0' : null,
             ),
@@ -470,33 +472,4 @@ class _ListingFormState extends ConsumerState<ListingForm> {
     );
   }
 
-  Widget buildSubmitButton() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: const Offset(0, -2))],
-      ),
-      child: SafeArea(
-        child: SizedBox(
-          height: 48,
-          child: ElevatedButton(
-            onPressed: (_s.isValid && !_s.isLoading) ? _validateAndSubmit : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green.shade700,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: Colors.grey.shade300,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: _s.isLoading
-                ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : Text(
-                    widget.isEditing ? 'Save Changes' : 'Publish Listing',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-          ),
-        ),
-      ),
-    );
-  }
 }

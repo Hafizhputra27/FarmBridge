@@ -14,7 +14,7 @@ class ListingRepository {
   }) async {
     var query = _client
         .from('listings')
-        .select('*, farmer_profiles(nama, lokasi)')
+        .select('*, farmer_profiles(nama, lokasi, verified)')
         .eq('status', 'active');
 
     if (category != null && category.isNotEmpty) {
@@ -31,6 +31,14 @@ class ListingRepository {
     }
 
     return query.order('created_at', ascending: false);
+  }
+
+  Future<Map<String, dynamic>> getListingDetail(String id) {
+    return _client
+        .from('listings')
+        .select('*, farmer_profiles(nama, lokasi, verified)')
+        .eq('id', id)
+        .single();
   }
 
   Future<List<Map<String, dynamic>>> getMyListings(String farmerId) {

@@ -19,6 +19,13 @@ void main() {
                 'total_transactions': 5,
                 'window_days': 90,
               }),
+          farmerIdentityProvider('farmer-1').overrideWith((ref) async => {
+                'nama': 'Green Valley Farm',
+                'lokasi': 'Ojai, CA',
+                'bio': 'Heirloom produce',
+                'verified': true,
+              }),
+          farmerListingsProvider('farmer-1').overrideWith((ref) async => []),
         ],
         child: const MaterialApp(
           home: FarmerProfileScreen(farmerId: 'farmer-1'),
@@ -27,11 +34,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Tingkat Pengiriman Tepat Waktu'), findsOneWidget);
+    expect(find.text('Pengiriman Tepat Waktu'), findsOneWidget);
     expect(find.text('75%'), findsWidgets);
     expect(find.text('Tingkat Penolakan'), findsOneWidget);
-    expect(find.text('Konsistensi Pemenuhan Pesanan'), findsOneWidget);
-    expect(find.text('Total Transaksi'), findsOneWidget);
+    expect(find.text('Konsistensi Pemenuhan'), findsOneWidget);
+    expect(find.text('TOTAL TRANSAKSI'), findsOneWidget);
     expect(find.text('Belum ada riwayat transaksi'), findsNothing);
   });
 
@@ -47,6 +54,9 @@ void main() {
                 'total_transactions': 0,
                 'window_days': 90,
               }),
+          farmerIdentityProvider('farmer-2')
+              .overrideWith((ref) async => null),
+          farmerListingsProvider('farmer-2').overrideWith((ref) async => []),
         ],
         child: const MaterialApp(
           home: FarmerProfileScreen(farmerId: 'farmer-2'),
@@ -56,7 +66,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Belum ada riwayat transaksi'), findsOneWidget);
-    expect(find.text('Tingkat Pengiriman Tepat Waktu'), findsNothing);
+    expect(find.text('Pengiriman Tepat Waktu'), findsNothing);
   });
 
   testWidgets('FarmerProfileScreen shows not-found state on 404 (null)',
@@ -89,6 +99,8 @@ void main() {
                 'avg_monthly_volume': 100,
                 'window_days': 90,
               }),
+          buyerIdentityProvider('buyer-1').overrideWith(
+              (ref) async => {'nama_institusi': 'Green Valley Market'}),
         ],
         child: const MaterialApp(
           home: BuyerProfileScreen(buyerId: 'buyer-1'),
@@ -117,6 +129,7 @@ void main() {
                 'avg_monthly_volume': null,
                 'window_days': 90,
               }),
+          buyerIdentityProvider('buyer-2').overrideWith((ref) async => null),
         ],
         child: const MaterialApp(
           home: BuyerProfileScreen(buyerId: 'buyer-2'),
