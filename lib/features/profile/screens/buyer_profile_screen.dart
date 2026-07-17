@@ -5,10 +5,23 @@ import '../../../core/app_theme.dart';
 import '../../../core/format.dart';
 import '../../../core/widgets/metric_bar.dart';
 import '../providers/profile_metrics_provider.dart';
+import '../widgets/profile_header.dart';
 
 class BuyerProfileScreen extends ConsumerWidget {
   final String buyerId;
   const BuyerProfileScreen({super.key, required this.buyerId});
+
+  Widget _header(WidgetRef ref) {
+    final identity = ref.watch(buyerIdentityProvider(buyerId));
+    return identity.maybeWhen(
+      data: (id) => id == null
+          ? const SizedBox.shrink()
+          : ProfileHeader(
+              name: id['nama_institusi']?.toString() ?? 'Pembeli',
+            ),
+      orElse: () => const SizedBox.shrink(),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -36,15 +49,19 @@ class BuyerProfileScreen extends ConsumerWidget {
               (data['total_procurement'] as num?)?.toDouble() ?? 0;
           final activeOrders = data['active_orders_count'] as int? ?? 0;
           if (totalProcurement == 0 && activeOrders == 0) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text(
-                  'Belum ada riwayat transaksi',
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
-                  textAlign: TextAlign.center,
+            return ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                _header(ref),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Text(
+                    'Belum ada riwayat transaksi',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-              ),
+              ],
             );
           }
           final reliability = (data['fulfillment_rate'] as num?) ?? 0;
@@ -53,6 +70,7 @@ class BuyerProfileScreen extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              _header(ref),
               // Ringkasan angka — dua kartu sejajar, gaya sama dengan kartu
               // TOTAL TRANSAKSI di profil petani.
               Row(

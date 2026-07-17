@@ -19,6 +19,12 @@ void main() {
                 'total_transactions': 5,
                 'window_days': 90,
               }),
+          farmerIdentityProvider('farmer-1').overrideWith((ref) async => {
+                'nama': 'Green Valley Farm',
+                'lokasi': 'Ojai, CA',
+                'bio': 'Heirloom produce',
+                'verified': true,
+              }),
         ],
         child: const MaterialApp(
           home: FarmerProfileScreen(farmerId: 'farmer-1'),
@@ -47,6 +53,8 @@ void main() {
                 'total_transactions': 0,
                 'window_days': 90,
               }),
+          farmerIdentityProvider('farmer-2')
+              .overrideWith((ref) async => null),
         ],
         child: const MaterialApp(
           home: FarmerProfileScreen(farmerId: 'farmer-2'),
@@ -89,6 +97,8 @@ void main() {
                 'avg_monthly_volume': 100,
                 'window_days': 90,
               }),
+          buyerIdentityProvider('buyer-1').overrideWith(
+              (ref) async => {'nama_institusi': 'Green Valley Market'}),
         ],
         child: const MaterialApp(
           home: BuyerProfileScreen(buyerId: 'buyer-1'),
@@ -117,6 +127,7 @@ void main() {
                 'avg_monthly_volume': null,
                 'window_days': 90,
               }),
+          buyerIdentityProvider('buyer-2').overrideWith((ref) async => null),
         ],
         child: const MaterialApp(
           home: BuyerProfileScreen(buyerId: 'buyer-2'),

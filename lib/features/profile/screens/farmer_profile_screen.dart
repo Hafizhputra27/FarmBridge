@@ -4,10 +4,26 @@ import 'package:go_router/go_router.dart';
 import '../../../core/app_theme.dart';
 import '../../../core/widgets/metric_bar.dart';
 import '../providers/profile_metrics_provider.dart';
+import '../widgets/profile_header.dart';
 
 class FarmerProfileScreen extends ConsumerWidget {
   final String farmerId;
   const FarmerProfileScreen({super.key, required this.farmerId});
+
+  Widget _header(WidgetRef ref) {
+    final identity = ref.watch(farmerIdentityProvider(farmerId));
+    return identity.maybeWhen(
+      data: (id) => id == null
+          ? const SizedBox.shrink()
+          : ProfileHeader(
+              name: id['nama']?.toString() ?? 'Petani',
+              location: id['lokasi']?.toString(),
+              bio: id['bio']?.toString(),
+              verified: id['verified'] == true,
+            ),
+      orElse: () => const SizedBox.shrink(),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -33,21 +49,26 @@ class FarmerProfileScreen extends ConsumerWidget {
           }
           final totalTransactions = data['total_transactions'] as int? ?? 0;
           if (totalTransactions == 0) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text(
-                  'Belum ada riwayat transaksi',
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
-                  textAlign: TextAlign.center,
+            return ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                _header(ref),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Text(
+                    'Belum ada riwayat transaksi',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-              ),
+              ],
             );
           }
           num pct(dynamic v) => (v as num?) ?? 0;
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              _header(ref),
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(18),
