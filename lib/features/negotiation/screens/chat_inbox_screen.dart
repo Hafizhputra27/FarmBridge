@@ -1,6 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/app_theme.dart';
+import '../../../core/format.dart';
 import '../data/negotiation_repository.dart';
 
 class ChatInboxScreen extends StatefulWidget {
@@ -84,6 +87,7 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
       );
     }
 
+    final myId = Supabase.instance.client.auth.currentUser?.id;
     return RefreshIndicator(
       onRefresh: _loadInbox,
       child: ListView.builder(
@@ -93,7 +97,8 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
           final item = _negotiations[index];
           return _InboxItem(
             negotiation: item,
-            onTap: () => context.push('/negotiations/${item['id']}'),
+            myId: myId,
+            onTap: () => context.push('/negosiasi/${item['id']}'),
           );
         },
       ),
@@ -103,9 +108,14 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
 
 class _InboxItem extends StatelessWidget {
   final Map<String, dynamic> negotiation;
+  final String? myId;
   final VoidCallback onTap;
 
-  const _InboxItem({required this.negotiation, required this.onTap});
+  const _InboxItem({
+    required this.negotiation,
+    required this.myId,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -115,12 +125,19 @@ class _InboxItem extends StatelessWidget {
     final status = negotiation['status']?.toString() ?? 'open';
     final fotoUrl = listing['foto_url']?.toString();
 
-    final counterpartName = farmerProfile['nama']?.toString().isNotEmpty == true
-        ? farmerProfile['nama'].toString()
-        : buyerProfile['nama_institusi']?.toString() ?? '';
+    // Tampilkan LAWAN bicara: kalau aku farmer -> nama buyer, sebaliknya.
+    // Dulu selalu ambil nama farmer, jadi farmer lihat namanya sendiri.
+    final iAmFarmer = myId != null && negotiation['farmer_id']?.toString() == myId;
+    final counterpartName = iAmFarmer
+        ? (buyerProfile['nama_institusi']?.toString().isNotEmpty == true
+            ? buyerProfile['nama_institusi'].toString()
+            : 'Pembeli')
+        : (farmerProfile['nama']?.toString().isNotEmpty == true
+            ? farmerProfile['nama'].toString()
+            : 'Petani');
 
     final listingTitle = listing['title']?.toString() ?? '';
-    final harga = listing['harga_per_unit']?.toString() ?? '0';
+    final harga = (listing['harga_per_unit'] as num?) ?? 0;
     final unit = listing['unit']?.toString() ?? 'kg';
 
     return Card(
@@ -185,9 +202,9 @@ class _InboxItem extends StatelessWidget {
                         overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 4),
                     Text(
-                      'Rp $harga/$unit',
-                      style: TextStyle(
-                        color: Colors.green.shade700,
+                      '${formatRupiah(harga)}/$unit',
+                      style: const TextStyle(
+                        color: AppTheme.brandGreen,
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),

@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/app_theme.dart';
+import '../../../core/format.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../data/negotiation_repository.dart';
 import '../widgets/chat_bubble.dart';
@@ -134,12 +137,21 @@ class _NegotiationChatScreenState extends ConsumerState<NegotiationChatScreen> {
   Future<void> _onAccept() async {
     final userId = ref.read(authProvider).userId;
     if (userId == null) return;
+    final offerPrice =
+        (_negotiation?['current_offer_price'] as num?)?.toDouble();
     try {
-      await _repo.sendMessage(
+      final result = await _repo.sendMessage(
         negotiationId: widget.negotiationId,
         senderId: userId,
         actionType: 'accept',
+        offerPrice: offerPrice,
       );
+      final transactionId = result['transaction_id']?.toString();
+      if (transactionId != null && mounted) {
+        // push, bukan go — sama seperti alur Buy Now (lihat
+        // listing_detail_screen.dart), biar back button jalan normal.
+        context.push('/transaksi/$transactionId');
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -219,8 +231,14 @@ class _NegotiationChatScreenState extends ConsumerState<NegotiationChatScreen> {
         isBuyer ? negotiation['farmer_id']?.toString() : negotiation['buyer_id']?.toString();
 
     final lastMessage = _messages.isNotEmpty ? _messages.last : null;
-    final isReceiver = lastMessage == null ||
-        lastMessage['sender_id'] != currentUserId;
+    // Penerima (pihak yang harus respon) = bukan pengirim aksi terakhir.
+    // Tanpa pesan: pembeli adalah pembuat tawaran, jadi PETANI penerima —
+    // sebelumnya `lastMessage == null` bikin keduanya dianggap penerima dan
+    // pembeli kelihatan punya tombol Terima/Tolak miliknya sendiri
+    // (edge fn tolak 403, tapi UI salah).
+    final isReceiver = lastMessage == null
+        ? currentUserId != negotiation['buyer_id']?.toString()
+        : lastMessage['sender_id'] != currentUserId;
 
     final currentQuantity = listing['quantity_available'];
     final stockChanged =
@@ -229,11 +247,18 @@ class _NegotiationChatScreenState extends ConsumerState<NegotiationChatScreen> {
     return Scaffold(
       appBar: AppBar(
         title: GestureDetector(
-          onTap: () {
-            if (counterpartId != null) {
-              Navigator.of(context).pushNamed(
-                '/farmer-profile/$counterpartId',
-              );
+          onTap: () async {
+            if (counterpartId == null) return;
+            if (isBuyer) {
+              // Lawan bicara farmer: /farmer-profile/:id = users.id, cocok.
+              context.push('/farmer-profile/$counterpartId');
+              return;
+            }
+            // Saya farmer, lawan bicara buyer: /buyer-profile/:id expect
+            // buyer_profiles.id, bukan users.id — resolve dulu.
+            final buyerProfileId = await _repo.getBuyerProfileId(counterpartId);
+            if (buyerProfileId != null && context.mounted) {
+              context.push('/buyer-profile/$buyerProfileId');
             }
           },
           child: Column(
@@ -251,19 +276,7 @@ class _NegotiationChatScreenState extends ConsumerState<NegotiationChatScreen> {
       ),
       body: Column(
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            color: _statusColor(status).withValues(alpha: 0.1),
-            child: Text(
-              _statusLabel(status),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: _statusColor(status),
-              ),
-            ),
-          ),
+          _activeNegotiationCard(negotiation, listing, status),
           if (stockChanged)
             Container(
               width: double.infinity,
@@ -286,26 +299,37 @@ class _NegotiationChatScreenState extends ConsumerState<NegotiationChatScreen> {
               ),
             ),
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              reverse: true,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final msg = _messages[_messages.length - 1 - index];
-                final actionType = msg['action_type']?.toString() ?? 'message';
-                final msgSenderId = msg['sender_id']?.toString();
+            child: _messages.isEmpty
+                ? Center(
+                    child: Text(
+                      'Belum ada pesan',
+                      style: TextStyle(color: Colors.grey.shade500),
+                    ),
+                  )
+                : ListView.builder(
+                    controller: _scrollController,
+                    reverse: true,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: _messages.length,
+                    itemBuilder: (context, index) {
+                      final msg = _messages[_messages.length - 1 - index];
+                      final actionType =
+                          msg['action_type']?.toString() ?? 'message';
+                      final msgSenderId = msg['sender_id']?.toString();
 
-                return ChatBubble(
-                  isMine: msgSenderId == currentUserId,
-                  text: msg['message_text']?.toString(),
-                  offerPrice: (msg['offer_price'] as num?)?.toDouble(),
-                  recommendedPrice: (negotiation['recommended_price'] as num?)?.toDouble(),
-                  actionType: actionType,
-                  createdAt: DateTime.parse(msg['created_at'].toString()),
-                );
-              },
-            ),
+                      return ChatBubble(
+                        isMine: msgSenderId == currentUserId,
+                        text: msg['message_text']?.toString(),
+                        offerPrice: (msg['offer_price'] as num?)?.toDouble(),
+                        recommendedPrice:
+                            (negotiation['recommended_price'] as num?)
+                                ?.toDouble(),
+                        actionType: actionType,
+                        createdAt:
+                            DateTime.parse(msg['created_at'].toString()),
+                      );
+                    },
+                  ),
           ),
           NegotiationActions(
             isReceiver: isReceiver,
@@ -344,7 +368,7 @@ class _NegotiationChatScreenState extends ConsumerState<NegotiationChatScreen> {
                     ),
                     const SizedBox(width: 8),
                     CircleAvatar(
-                      backgroundColor: Colors.green.shade600,
+                      backgroundColor: AppTheme.brandGreen,
                       child: IconButton(
                         icon: const Icon(Icons.send, color: Colors.white, size: 18),
                         onPressed: _sendMessage,
@@ -354,6 +378,69 @@ class _NegotiationChatScreenState extends ConsumerState<NegotiationChatScreen> {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _activeNegotiationCard(
+    Map<String, dynamic> negotiation,
+    Map<String, dynamic> listing,
+    String status,
+  ) {
+    final offerPrice = (negotiation['current_offer_price'] as num?) ??
+        (negotiation['initial_price'] as num?) ??
+        0;
+    final quantity = negotiation['quantity'];
+    final unit = listing['unit']?.toString() ?? 'kg';
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.brandGreen.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Negosiasi Aktif',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey.shade700)),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _statusColor(status).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(_statusLabel(status),
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: _statusColor(status))),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${formatRupiah(offerPrice)} / $unit',
+            style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.brandGreen),
+          ),
+          if (quantity != null) ...[
+            const SizedBox(height: 2),
+            Text('Kuantitas: $quantity $unit',
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+          ],
         ],
       ),
     );

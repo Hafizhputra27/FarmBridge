@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'core/app_theme.dart';
 import 'core/router/app_router.dart';
 import 'core/services/fcm_service.dart';
 import 'features/auth/providers/auth_provider.dart';
@@ -49,10 +50,7 @@ class FarmBridgeApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: 'FarmBridge',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.light,
       routerConfig: router,
     );
   }

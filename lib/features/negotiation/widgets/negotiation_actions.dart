@@ -35,11 +35,10 @@ class NegotiationActions extends StatelessWidget {
             child: OutlinedButton(
               onPressed: onDecline,
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.red.shade600,
-                side: BorderSide(color: Colors.red.shade300),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                minimumSize: const Size.fromHeight(44),
+                foregroundColor: Colors.grey.shade700,
+                side: BorderSide(color: Colors.grey.shade400),
+                shape: const StadiumBorder(),
               ),
               child: const Text('Tolak', style: TextStyle(fontSize: 13)),
             ),
@@ -49,11 +48,10 @@ class NegotiationActions extends StatelessWidget {
             child: OutlinedButton(
               onPressed: () => _showCounterDialog(context),
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.orange.shade700,
-                side: BorderSide(color: Colors.orange.shade300),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                minimumSize: const Size.fromHeight(44),
+                foregroundColor: const Color(0xFF14532D),
+                side: const BorderSide(color: Color(0xFF14532D)),
+                shape: const StadiumBorder(),
               ),
               child: const Text('Tawar', style: TextStyle(fontSize: 13)),
             ),
@@ -61,14 +59,12 @@ class NegotiationActions extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             flex: 2,
-            child: ElevatedButton(
+            child: FilledButton(
               onPressed: onAccept,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green.shade600,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(44),
+                backgroundColor: const Color(0xFF14532D),
+                shape: const StadiumBorder(),
               ),
               child: const Text('Terima', style: TextStyle(fontSize: 13)),
             ),

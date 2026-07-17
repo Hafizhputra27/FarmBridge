@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/app_theme.dart';
+import '../../../core/format.dart';
 
 class ChatBubble extends StatelessWidget {
   final bool isMine;
@@ -21,11 +23,15 @@ class ChatBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (actionType == 'accept') {
-      return _systemBubble('Diterima', Colors.green.shade600);
+      return _systemBubble('Diterima', AppTheme.brandGreen);
     }
     if (actionType == 'decline') {
       return _systemBubble('Ditolak', Colors.red.shade600);
     }
+
+    final bubbleColor = isMine ? AppTheme.brandGreen : Colors.white;
+    final textColor = isMine ? Colors.white : AppTheme.ink;
+    final subColor = isMine ? Colors.white70 : Colors.grey.shade600;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -37,7 +43,10 @@ class ChatBubble extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 280),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isMine ? Colors.green.shade100 : Colors.grey.shade200,
+                color: bubbleColor,
+                border: isMine
+                    ? null
+                    : Border.all(color: Colors.black.withValues(alpha: 0.08)),
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
                   topRight: const Radius.circular(16),
@@ -56,7 +65,9 @@ class ChatBubble extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.orange.shade50,
+                        color: isMine
+                            ? Colors.white.withValues(alpha: 0.18)
+                            : const Color(0xFFFFF3E0),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -64,7 +75,7 @@ class ChatBubble extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: Colors.orange.shade800,
+                          color: isMine ? Colors.white : Colors.orange.shade800,
                         ),
                       ),
                     ),
@@ -72,10 +83,11 @@ class ChatBubble extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 4),
                       child: Text(
-                        'Rp ${offerPrice!.toStringAsFixed(0)}',
+                        formatRupiah(offerPrice!),
                         style: TextStyle(
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: isMine ? Colors.green.shade800 : Colors.orange.shade800,
+                          color: textColor,
                         ),
                       ),
                     ),
@@ -85,28 +97,24 @@ class ChatBubble extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.info_outline, size: 12,
-                              color: Colors.blue.shade600),
+                          Icon(Icons.info_outline, size: 12, color: subColor),
                           const SizedBox(width: 4),
-                          Text(
-                            'Harga rekomendasi: Rp ${recommendedPrice!.toStringAsFixed(0)}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.blue.shade600,
+                          Flexible(
+                            child: Text(
+                              'Rekomendasi: ${formatRupiah(recommendedPrice!)}',
+                              style: TextStyle(fontSize: 12, color: subColor),
                             ),
                           ),
                         ],
                       ),
                     ),
                   if (text != null && text!.isNotEmpty)
-                    Text(text!, style: const TextStyle(fontSize: 14)),
+                    Text(text!,
+                        style: TextStyle(fontSize: 14, color: textColor)),
                   const SizedBox(height: 4),
                   Text(
                     _formatTime(createdAt),
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 10, color: subColor),
                   ),
                 ],
               ),
