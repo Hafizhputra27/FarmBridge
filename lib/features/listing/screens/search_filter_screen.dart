@@ -17,7 +17,7 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
 
   // Kategori mengikuti data listing aktual (Cabai/Sayuran/Umbi) — kalau
   // hardcode kategori yang tidak ada di data, filter selalu balik kosong.
-  final _categories = ['Semua', 'Cabai', 'Sayuran', 'Umbi'];
+  final _categories = ['Semua', 'Cabai', 'Sayuran', 'Umbi', 'Buah'];
   final _regions = ['Semua', 'Jawa Barat', 'Jawa Tengah', 'Jawa Timur'];
 
   String _selectedCategory = 'Semua';

@@ -42,8 +42,9 @@ class ListingFormState {
     priceController.text = price ?? '';
   }
 
+  // Foto opsional — dulu wajib, tapi upload storage bisa gagal & memblok
+  // publish total. Tanpa foto, feed tampil placeholder (sudah dihandle).
   bool get isValid =>
-      fotoUrl != null &&
       titleController.text.trim().isNotEmpty &&
       (double.tryParse(priceController.text) ?? 0) > 0 &&
       category != null &&
@@ -72,7 +73,7 @@ class _ListingFormState extends ConsumerState<ListingForm> {
   final _picker = ImagePicker();
   final _unitOptions = ['kg', 'head', 'flat', 'box', 'ikat'];
   // Taksonomi kategori konsisten dengan feed & search (Cabai/Sayuran/Umbi).
-  final _categories = ['Cabai', 'Sayuran', 'Umbi'];
+  final _categories = ['Cabai', 'Sayuran', 'Umbi', 'Buah'];
   final _regions = ['Jawa Barat', 'Jawa Tengah', 'Jawa Timur'];
 
   late ListingFormState _s;
@@ -134,7 +135,6 @@ class _ListingFormState extends ConsumerState<ListingForm> {
 
   void _validateAndSubmit() async {
     setState(() {
-      _s.fotoError = _s.fotoUrl == null;
       _s.titleError = _s.titleController.text.trim().isEmpty;
       _s.priceError = (double.tryParse(_s.priceController.text) ?? 0) <= 0;
       _s.categoryError = _s.category == null;

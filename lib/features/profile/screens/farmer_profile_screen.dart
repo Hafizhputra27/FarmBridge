@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/app_theme.dart';
 import '../../../core/format.dart';
 import '../../../core/widgets/metric_bar.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../auth/widgets/logout_button.dart';
 import '../providers/profile_metrics_provider.dart';
 import '../widgets/profile_header.dart';
 
@@ -69,6 +71,7 @@ class FarmerProfileScreen extends ConsumerWidget {
             tooltip: 'Recurring Order Saya',
             onPressed: () => context.push('/recurring-orders'),
           ),
+          if (farmerId == ref.watch(authProvider).userId) const LogoutButton(),
         ],
       ),
       body: metrics.when(

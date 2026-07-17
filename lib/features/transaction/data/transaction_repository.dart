@@ -10,6 +10,17 @@ class TransactionRepository {
   // buyer_profiles/farmer_profiles (dicek pg_constraint, pola sama seperti
   // negotiations Sprint 6). Data farmer didapat lewat chain FK yang valid
   // (negotiations -> listings -> farmer_profiles), data buyer manual lookup.
+  // Daftar transaksi milik user (RLS scope ke buyer/farmer). Listing didapat
+  // via negotiations->listings, atau recurring_orders->listings untuk order
+  // recurring (negotiation_id null).
+  Future<List<Map<String, dynamic>>> getMyTransactions() async {
+    return await _client
+        .from('transactions')
+        .select(
+            '*, negotiations(listings(title, foto_url, unit)), recurring_orders(listings(title, foto_url, unit))')
+        .order('created_at', ascending: false);
+  }
+
   Future<Map<String, dynamic>> getTransaction(String id) async {
     final tx = await _client
         .from('transactions')

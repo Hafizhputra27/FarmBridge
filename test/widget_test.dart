@@ -11,6 +11,8 @@ void main() {
     );
 
     expect(find.text('FarmBridge'), findsOneWidget);
-    expect(find.text('Pilih peran Anda'), findsOneWidget);
+    expect(find.text('Masuk sebagai'), findsOneWidget);
+    expect(find.text('Petani'), findsOneWidget);
+    expect(find.text('Pembeli'), findsOneWidget);
   });
 }

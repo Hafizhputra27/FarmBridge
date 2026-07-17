@@ -14,6 +14,7 @@ import '../../features/negotiation/screens/chat_inbox_screen.dart';
 import '../../features/farmer/screens/farmer_dashboard_screen.dart';
 import '../../features/listing/screens/listing_detail_screen.dart';
 import '../../features/transaction/screens/transaction_detail_screen.dart';
+import '../../features/transaction/screens/orders_screen.dart';
 import '../../features/recurring_order/screens/recurring_orders_screen.dart';
 import '../../features/recurring_order/screens/recurring_order_detail_screen.dart';
 import '../widgets/main_shell.dart';
@@ -87,6 +88,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/percakapan',
             builder: (context, state) => const ChatInboxScreen(),
+          ),
+          GoRoute(
+            path: '/pesanan',
+            builder: (context, state) => const OrdersScreen(),
           ),
           GoRoute(
             path: '/listing/:id',

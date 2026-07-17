@@ -74,6 +74,11 @@ class _FarmerDashboardScreenState extends ConsumerState<FarmerDashboardScreen> {
         ),
         actions: [
           IconButton(
+            tooltip: 'Pesanan Masuk',
+            icon: const Icon(Icons.receipt_long_outlined),
+            onPressed: () => context.push('/pesanan'),
+          ),
+          IconButton(
             tooltip: 'Listing Saya',
             icon: const Icon(Icons.list_alt),
             onPressed: () => context.push('/farmer/listings'),

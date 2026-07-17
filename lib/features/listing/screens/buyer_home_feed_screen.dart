@@ -75,6 +75,11 @@ class _BuyerHomeFeedScreenState extends State<BuyerHomeFeedScreen> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.receipt_long_outlined),
+            tooltip: 'Pesanan Saya',
+            onPressed: () => context.push('/pesanan'),
+          ),
+          IconButton(
             icon: const Icon(Icons.chat_bubble_outline),
             onPressed: () => context.push('/percakapan'),
           ),

@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/app_theme.dart';
 import '../../../core/format.dart';
+import '../../../core/widgets/main_shell.dart';
 import '../../../core/widgets/metric_bar.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../auth/widgets/logout_button.dart';
 import '../providers/profile_metrics_provider.dart';
 import '../widgets/profile_header.dart';
 
@@ -27,6 +30,13 @@ class BuyerProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final metrics = ref.watch(buyerMetricsProvider(buyerId));
 
+    // Logout hanya di profil sendiri: buyerId (buyer_profiles.id) == milikku.
+    final myUserId = ref.watch(authProvider).userId;
+    final myBuyerId = myUserId == null
+        ? null
+        : ref.watch(myBuyerProfileIdProvider(myUserId)).valueOrNull;
+    final isSelf = myBuyerId != null && myBuyerId == buyerId;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profil Pembeli'),
@@ -36,6 +46,7 @@ class BuyerProfileScreen extends ConsumerWidget {
             tooltip: 'Recurring Order Saya',
             onPressed: () => context.push('/recurring-orders'),
           ),
+          if (isSelf) const LogoutButton(),
         ],
       ),
       body: metrics.when(
