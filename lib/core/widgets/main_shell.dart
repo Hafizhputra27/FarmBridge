@@ -27,6 +27,8 @@ int buyerTabIndexFor(String location) {
 int farmerTabIndexFor(String location) {
   if (location == '/percakapan') return 1;
   if (location.startsWith('/farmer-profile/')) return 2;
+  // /farmer/dashboard dan /farmer/listings (diakses via tombol appbar)
+  // sama-sama "home" petani — highlight tab Dashboard.
   return 0;
 }
 
@@ -114,7 +116,7 @@ class _FarmerShell extends StatelessWidget {
   void _onTap(BuildContext context, int index) {
     switch (index) {
       case 0:
-        context.go('/farmer/listings');
+        context.go('/farmer/dashboard');
       case 1:
         context.go('/percakapan');
       case 2:
@@ -133,8 +135,8 @@ class _FarmerShell extends StatelessWidget {
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt),
-            label: 'Listing Saya',
+            icon: Icon(Icons.space_dashboard_outlined),
+            label: 'Dashboard',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.chat_bubble_outline),

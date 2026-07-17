@@ -470,33 +470,4 @@ class _ListingFormState extends ConsumerState<ListingForm> {
     );
   }
 
-  Widget buildSubmitButton() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: const Offset(0, -2))],
-      ),
-      child: SafeArea(
-        child: SizedBox(
-          height: 48,
-          child: ElevatedButton(
-            onPressed: (_s.isValid && !_s.isLoading) ? _validateAndSubmit : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green.shade700,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: Colors.grey.shade300,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: _s.isLoading
-                ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : Text(
-                    widget.isEditing ? 'Save Changes' : 'Publish Listing',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-          ),
-        ),
-      ),
-    );
-  }
 }

@@ -58,6 +58,37 @@ class NegotiationRepository {
         .toList();
   }
 
+  // POST /negotiations — handleCreate pakai service-role key di edge
+  // function jadi buyer_id dipercaya dari body. Balas negotiation_id +
+  // rekomendasi harga untuk ditampilkan di sheet/bubble.
+  Future<String> createNegotiation({
+    required String listingId,
+    required String buyerId,
+    required double initialPrice,
+    required int quantity,
+  }) async {
+    try {
+      final res = await _client.functions.invoke(
+        'negotiations',
+        method: HttpMethod.post,
+        body: {
+          'listing_id': listingId,
+          'buyer_id': buyerId,
+          'initial_price': initialPrice,
+          'quantity': quantity,
+        },
+      );
+      final data = res.data as Map<String, dynamic>;
+      return data['negotiation_id'] as String;
+    } on FunctionException catch (e) {
+      final details = e.details;
+      final message = (details is Map && details['error'] != null)
+          ? details['error'].toString()
+          : 'Gagal membuat negosiasi (${e.status})';
+      throw Exception(message);
+    }
+  }
+
   /// negotiations.buyer_id = users.id, tapi /buyer-profile/:id (route)
   /// expect buyer_profiles.id — resolve dulu sebelum navigasi ke sana.
   Future<String?> getBuyerProfileId(String userId) async {

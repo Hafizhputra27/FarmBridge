@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/app_theme.dart';
+import '../../../core/format.dart';
 import '../data/recurring_order_repository.dart';
 
 class RecurringOrderDetailScreen extends StatefulWidget {
@@ -96,27 +98,71 @@ class _RecurringOrderDetailScreenState
     final farmerProfile = order['farmer_profiles'] as Map<String, dynamic>?;
     final buyerProfile = order['buyer_profiles'] as Map<String, dynamic>?;
     final status = order['status']?.toString() ?? 'active';
+    final unit = listing['unit']?.toString() ?? 'kg';
+    final lockedPrice = (order['locked_price'] as num?) ?? 0;
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text(
-          listing['title']?.toString() ?? listing['category']?.toString() ?? '-',
-          style: Theme.of(context).textTheme.titleLarge,
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                listing['title']?.toString() ??
+                    listing['category']?.toString() ??
+                    '-',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+            const SizedBox(width: 12),
+            _roStatusChip(status),
+          ],
         ),
-        const SizedBox(height: 8),
-        Text('Status: $status'),
-        const SizedBox(height: 8),
-        Text('Petani: ${farmerProfile?['nama'] ?? '-'}'),
-        Text('Pembeli: ${buyerProfile?['nama_institusi'] ?? '-'}'),
-        const SizedBox(height: 8),
-        Text('Kuantitas: ${order['quantity']}'),
-        Text('Harga terkunci: Rp${order['locked_price']}'),
-        Text('Frekuensi: ${order['frequency']}'),
-        Text('Order berikutnya: ${order['next_order_date']}'),
+        const SizedBox(height: 20),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                _infoRow(Icons.person_outline, 'Petani',
+                    farmerProfile?['nama']?.toString() ?? '-'),
+                _infoRow(Icons.storefront_outlined, 'Pembeli',
+                    buyerProfile?['nama_institusi']?.toString() ?? '-'),
+                _infoRow(Icons.scale_outlined, 'Kuantitas per siklus',
+                    '${order['quantity']} $unit'),
+                _infoRow(Icons.repeat, 'Frekuensi', _freqLabel(order['frequency'])),
+                _infoRow(Icons.event_outlined, 'Order berikutnya',
+                    order['next_order_date']?.toString() ?? '-',
+                    isLast: true),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Card(
+          color: AppTheme.sage,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Harga terkunci / $unit',
+                    style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  formatRupiah(lockedPrice),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.brandGreen,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         const SizedBox(height: 24),
         if (status == 'active') ...[
-          ElevatedButton(
+          FilledButton(
             onPressed: _isUpdating
                 ? null
                 : () => _confirmStatusChange(
@@ -124,26 +170,25 @@ class _RecurringOrderDetailScreenState
                       'Jeda Recurring Order?',
                       'Siklus berikutnya tidak akan dibuat sampai diaktifkan lagi.',
                     ),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFB26A00)),
             child: const Text('Jeda'),
           ),
           const SizedBox(height: 8),
         ],
-        if (status == 'paused')
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: ElevatedButton(
-              onPressed: _isUpdating
-                  ? null
-                  : () => _confirmStatusChange(
-                        'active',
-                        'Aktifkan Lagi?',
-                        'Recurring order akan lanjut ke siklus berikutnya.',
-                      ),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-              child: const Text('Aktifkan Lagi'),
-            ),
+        if (status == 'paused') ...[
+          FilledButton(
+            onPressed: _isUpdating
+                ? null
+                : () => _confirmStatusChange(
+                      'active',
+                      'Aktifkan Lagi?',
+                      'Recurring order akan lanjut ke siklus berikutnya.',
+                    ),
+            child: const Text('Aktifkan Lagi'),
           ),
+          const SizedBox(height: 8),
+        ],
         if (status != 'cancelled')
           OutlinedButton(
             onPressed: _isUpdating
@@ -153,10 +198,61 @@ class _RecurringOrderDetailScreenState
                       'Batalkan Recurring Order?',
                       'Tidak bisa diaktifkan lagi setelah dibatalkan.',
                     ),
-            style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.red.shade600,
+              side: BorderSide(color: Colors.red.shade600),
+            ),
             child: const Text('Batalkan'),
           ),
       ],
+    );
+  }
+
+  String _freqLabel(dynamic f) => switch (f?.toString()) {
+        'weekly' => 'Mingguan',
+        'biweekly' => '2 Mingguan',
+        'monthly' => 'Bulanan',
+        _ => f?.toString() ?? '-',
+      };
+
+  Widget _roStatusChip(String status) {
+    final (label, color) = switch (status) {
+      'active' => ('Aktif', AppTheme.brandGreen),
+      'paused' => ('Dijeda', const Color(0xFFB26A00)),
+      'cancelled' => ('Dibatalkan', const Color(0xFFC62828)),
+      _ => (status, Colors.grey.shade700),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(label,
+          style: TextStyle(
+              color: color, fontWeight: FontWeight.w700, fontSize: 13)),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String label, String value,
+      {bool isLast = false}) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 14),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: Colors.grey.shade600),
+          const SizedBox(width: 10),
+          Text(label, style: TextStyle(color: Colors.grey.shade700)),
+          const Spacer(),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

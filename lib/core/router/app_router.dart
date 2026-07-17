@@ -11,6 +11,7 @@ import '../../features/listing/screens/buyer_home_feed_screen.dart';
 import '../../features/listing/screens/search_filter_screen.dart';
 import '../../features/negotiation/screens/negotiation_chat_screen.dart';
 import '../../features/negotiation/screens/chat_inbox_screen.dart';
+import '../../features/farmer/screens/farmer_dashboard_screen.dart';
 import '../../features/listing/screens/listing_detail_screen.dart';
 import '../../features/transaction/screens/transaction_detail_screen.dart';
 import '../../features/recurring_order/screens/recurring_orders_screen.dart';
@@ -142,8 +143,12 @@ final farmerRoutes = <RouteBase>[
   GoRoute(
     path: '/farmer',
     redirect: (context, state) =>
-        state.matchedLocation == '/farmer' ? '/farmer/listings' : null,
+        state.matchedLocation == '/farmer' ? '/farmer/dashboard' : null,
     routes: [
+      GoRoute(
+        path: 'dashboard',
+        builder: (context, state) => const FarmerDashboardScreen(),
+      ),
       GoRoute(
         path: 'listings',
         builder: (context, state) => const MyListingsScreen(),

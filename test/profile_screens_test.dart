@@ -27,11 +27,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Tingkat Pengiriman Tepat Waktu'), findsOneWidget);
+    expect(find.text('Pengiriman Tepat Waktu'), findsOneWidget);
     expect(find.text('75%'), findsWidgets);
     expect(find.text('Tingkat Penolakan'), findsOneWidget);
-    expect(find.text('Konsistensi Pemenuhan Pesanan'), findsOneWidget);
-    expect(find.text('Total Transaksi'), findsOneWidget);
+    expect(find.text('Konsistensi Pemenuhan'), findsOneWidget);
+    expect(find.text('TOTAL TRANSAKSI'), findsOneWidget);
     expect(find.text('Belum ada riwayat transaksi'), findsNothing);
   });
 
@@ -56,7 +56,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Belum ada riwayat transaksi'), findsOneWidget);
-    expect(find.text('Tingkat Pengiriman Tepat Waktu'), findsNothing);
+    expect(find.text('Pengiriman Tepat Waktu'), findsNothing);
   });
 
   testWidgets('FarmerProfileScreen shows not-found state on 404 (null)',

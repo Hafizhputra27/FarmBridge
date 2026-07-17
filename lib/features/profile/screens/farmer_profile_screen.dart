@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/app_theme.dart';
+import '../../../core/widgets/metric_bar.dart';
 import '../providers/profile_metrics_provider.dart';
 
 class FarmerProfileScreen extends ConsumerWidget {
@@ -42,31 +44,66 @@ class FarmerProfileScreen extends ConsumerWidget {
               ),
             );
           }
+          num pct(dynamic v) => (v as num?) ?? 0;
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              _MetricCard(
-                label: 'Tingkat Pengiriman Tepat Waktu',
-                value: '${data['on_time_delivery_rate']}%',
-              ),
-              _MetricCard(
-                label: 'Tingkat Penolakan',
-                value: '${data['rejection_rate']}%',
-              ),
-              _MetricCard(
-                label: 'Konsistensi Pemenuhan Pesanan',
-                value: '${data['fulfillment_consistency']}%',
-              ),
-              _MetricCard(
-                label: 'Total Transaksi',
-                value: '$totalTransactions',
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  'Berdasarkan ${data['window_days']} hari terakhir',
-                  style: Theme.of(context).textTheme.bodySmall,
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.shield_outlined,
+                              size: 20, color: AppTheme.brandGreen),
+                          const SizedBox(width: 8),
+                          Text('Trust Score',
+                              style: Theme.of(context).textTheme.titleMedium),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      MetricBar(
+                        icon: Icons.local_shipping_outlined,
+                        label: 'Pengiriman Tepat Waktu',
+                        percent: pct(data['on_time_delivery_rate']),
+                      ),
+                      MetricBar(
+                        icon: Icons.cancel_outlined,
+                        label: 'Tingkat Penolakan',
+                        percent: pct(data['rejection_rate']),
+                      ),
+                      MetricBar(
+                        icon: Icons.verified_outlined,
+                        label: 'Konsistensi Pemenuhan',
+                        percent: pct(data['fulfillment_consistency']),
+                        isLast: true,
+                      ),
+                      const Divider(height: 28),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('TOTAL TRANSAKSI',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.grey.shade600)),
+                          Text('$totalTransactions',
+                              style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.brandGreen)),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Berdasarkan ${data['window_days']} hari terakhir',
+                style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
           );
@@ -76,22 +113,3 @@ class FarmerProfileScreen extends ConsumerWidget {
   }
 }
 
-class _MetricCard extends StatelessWidget {
-  final String label;
-  final String value;
-  const _MetricCard({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        title: Text(label),
-        trailing: Text(
-          value,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-      ),
-    );
-  }
-}
