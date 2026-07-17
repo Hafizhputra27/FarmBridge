@@ -1,11 +1,11 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { FREQUENCY_DAYS } from "../_shared/frequency.ts";
 
 function parsePath(path: string): { id?: string } {
   const parts = path.replace(/^\/recurring-orders\/?/, "").split("/").filter(Boolean);
   return { id: parts[0] };
 }
 
-const FREQUENCY_DAYS: Record<string, number> = { weekly: 7, biweekly: 14, monthly: 30 };
 const VALID_STATUSES = ["active", "paused", "cancelled"];
 
 // --- POST /recurring-orders ---

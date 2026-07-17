@@ -14,6 +14,8 @@ import '../../features/negotiation/screens/negotiation_chat_screen.dart';
 import '../../features/negotiation/screens/chat_inbox_screen.dart';
 import '../../features/listing/screens/listing_detail_screen.dart';
 import '../../features/transaction/screens/transaction_detail_screen.dart';
+import '../../features/recurring_order/screens/recurring_orders_screen.dart';
+import '../../features/recurring_order/screens/recurring_order_detail_screen.dart';
 import '../widgets/main_shell.dart';
 
 // Pure — diextract dari redirect callback supaya bisa diunit-test tanpa
@@ -107,6 +109,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final id = state.pathParameters['id']!;
           return TransactionDetailScreen(transactionId: id);
+        },
+      ),
+      GoRoute(
+        path: '/recurring-orders',
+        builder: (context, state) => const RecurringOrdersScreen(),
+      ),
+      GoRoute(
+        path: '/recurring-orders/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return RecurringOrderDetailScreen(recurringOrderId: id);
         },
       ),
     ],

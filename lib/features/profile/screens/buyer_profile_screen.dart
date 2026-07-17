@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/profile_metrics_provider.dart';
 
 class BuyerProfileScreen extends ConsumerWidget {
@@ -11,7 +12,16 @@ class BuyerProfileScreen extends ConsumerWidget {
     final metrics = ref.watch(buyerMetricsProvider(buyerId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profil Pembeli')),
+      appBar: AppBar(
+        title: const Text('Profil Pembeli'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.autorenew),
+            tooltip: 'Recurring Order Saya',
+            onPressed: () => context.push('/recurring-orders'),
+          ),
+        ],
+      ),
       body: metrics.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Gagal memuat profil: $e')),

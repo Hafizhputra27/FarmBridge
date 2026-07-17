@@ -141,3 +141,70 @@ export async function releaseInventoryOnReject(
 
   return { success: true };
 }
+
+export async function lockInventoryForRecurringCycle(
+  supabase: SupabaseClient,
+  recurringOrder: {
+    id: string;
+    listing_id: string;
+    farmer_id: string;
+    buyer_id: string;
+    quantity: number;
+    locked_price: number;
+  },
+): Promise<LockInventoryResult> {
+  const { data: listing, error: listingErr } = await supabase
+    .from("listings")
+    .select("quantity_available")
+    .eq("id", recurringOrder.listing_id)
+    .single();
+
+  if (listingErr || !listing) {
+    return { success: false, error: "Listing tidak ditemukan" };
+  }
+
+  const currentQty = Number(listing.quantity_available);
+  const quantity = Number(recurringOrder.quantity);
+  if (currentQty < quantity) {
+    return { success: false, error: "Stok tidak mencukupi" };
+  }
+
+  const { error: deductErr } = await supabase
+    .from("listings")
+    .update({ quantity_available: currentQty - quantity })
+    .eq("id", recurringOrder.listing_id)
+    .eq("quantity_available", currentQty); // optimistic concurrency guard
+
+  if (deductErr) {
+    return { success: false, error: "Gagal mengurangi stok: " + deductErr.message };
+  }
+
+  const totalAmount = quantity * Number(recurringOrder.locked_price);
+  const promised = new Date();
+  promised.setDate(promised.getDate() + 7);
+
+  const { data: tx, error: txErr } = await supabase
+    .from("transactions")
+    .insert({
+      recurring_order_id: recurringOrder.id,
+      farmer_id: recurringOrder.farmer_id,
+      buyer_id: recurringOrder.buyer_id,
+      status: "pending",
+      agreed_quantity: quantity,
+      total_amount: totalAmount,
+      promised_delivery_date: promised.toISOString().slice(0, 10),
+    })
+    .select("id")
+    .single();
+
+  if (txErr) {
+    // Rollback: kembalikan stok
+    await supabase
+      .from("listings")
+      .update({ quantity_available: currentQty })
+      .eq("id", recurringOrder.listing_id);
+    return { success: false, error: "Gagal membuat transaksi: " + txErr.message };
+  }
+
+  return { success: true, transaction_id: tx.id };
+}

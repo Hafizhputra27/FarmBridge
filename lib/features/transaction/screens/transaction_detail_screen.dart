@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../recurring_order/data/recurring_order_repository.dart';
 import '../data/transaction_repository.dart';
 
 class TransactionDetailScreen extends ConsumerStatefulWidget {
@@ -210,6 +212,114 @@ class _TransactionDetailScreenState
     }
   }
 
+  Future<void> _openRecurringOrderSheet() async {
+    final tx = _tx!;
+    final negotiation = tx['negotiations'] as Map<String, dynamic>?;
+    final listingId = negotiation?['listing_id']?.toString();
+    if (listingId == null) return;
+
+    final agreedQuantity = (tx['agreed_quantity'] as num).toInt();
+    final totalAmount = (tx['total_amount'] as num).toDouble();
+    final unitPrice = totalAmount / agreedQuantity;
+
+    final quantityController =
+        TextEditingController(text: agreedQuantity.toString());
+    String frequency = 'weekly';
+    String? sheetError;
+    bool isSubmitting = false;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Jadikan Recurring Order',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: quantityController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Kuantitas per siklus'),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: frequency,
+                    decoration: const InputDecoration(labelText: 'Frekuensi'),
+                    items: const [
+                      DropdownMenuItem(value: 'weekly', child: Text('Mingguan')),
+                      DropdownMenuItem(value: 'biweekly', child: Text('2 Mingguan')),
+                      DropdownMenuItem(value: 'monthly', child: Text('Bulanan')),
+                    ],
+                    onChanged: (v) {
+                      if (v != null) setSheetState(() => frequency = v);
+                    },
+                  ),
+                  if (sheetError != null) ...[
+                    const SizedBox(height: 8),
+                    Text(sheetError!, style: const TextStyle(color: Colors.red)),
+                  ],
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: isSubmitting
+                        ? null
+                        : () async {
+                            final qty = int.tryParse(quantityController.text);
+                            if (qty == null || qty <= 0) {
+                              setSheetState(
+                                () => sheetError = 'Kuantitas harus lebih dari 0',
+                              );
+                              return;
+                            }
+                            setSheetState(() => isSubmitting = true);
+                            try {
+                              final id = await RecurringOrderRepository().create(
+                                buyerId: tx['buyer_id'].toString(),
+                                farmerId: tx['farmer_id'].toString(),
+                                listingId: listingId,
+                                quantity: qty,
+                                frequency: frequency,
+                                lockedPrice: unitPrice,
+                              );
+                              if (ctx.mounted) Navigator.pop(ctx);
+                              if (mounted) context.push('/recurring-orders/$id');
+                            } catch (e) {
+                              setSheetState(() {
+                                isSubmitting = false;
+                                sheetError = e.toString();
+                              });
+                            }
+                          },
+                    child: isSubmitting
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Buat Recurring Order'),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final role = ref.watch(currentUserRoleProvider);
@@ -263,6 +373,11 @@ class _TransactionDetailScreenState
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Text('Tolak Transaksi'),
+          ),
+        if (role == 'buyer' && status == 'fulfilled')
+          ElevatedButton(
+            onPressed: _openRecurringOrderSheet,
+            child: const Text('Jadikan Recurring Order'),
           ),
         if (role == 'farmer' && status == 'pending')
           ElevatedButton(
