@@ -49,6 +49,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return InputDecoration(
       labelText: label,
       labelStyle: const TextStyle(color: Colors.white70),
+      // filled:false — override inputDecorationTheme global (fill putih) yang
+      // di sini bikin field jadi blok putih dgn teks putih (tak terlihat).
+      filled: false,
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.4)),

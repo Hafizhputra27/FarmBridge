@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/format.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../recurring_order/data/recurring_order_repository.dart';
 import '../data/transaction_repository.dart';
@@ -342,55 +343,146 @@ class _TransactionDetailScreenState
         listing?['farmer_profiles'] as Map<String, dynamic>?;
     final buyerProfile = tx['buyer_profiles'] as Map<String, dynamic>?;
     final status = tx['status']?.toString() ?? 'pending';
+    final total = (tx['total_amount'] as num?) ?? 0;
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text(
-          listing?['title']?.toString() ??
-              listing?['category']?.toString() ??
-              '-',
-          style: Theme.of(context).textTheme.titleLarge,
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                listing?['title']?.toString() ??
+                    listing?['category']?.toString() ??
+                    '-',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+            const SizedBox(width: 12),
+            _StatusChip(status: status),
+          ],
         ),
-        const SizedBox(height: 8),
-        Text('Status: $status'),
-        const SizedBox(height: 8),
-        Text('Petani: ${farmerProfile?['nama'] ?? '-'}'),
-        Text('Pembeli: ${buyerProfile?['nama_institusi'] ?? '-'}'),
-        const SizedBox(height: 8),
-        Text('Jumlah: ${tx['agreed_quantity']}'),
-        Text('Total: Rp${tx['total_amount']}'),
-        Text('Estimasi kirim: ${tx['promised_delivery_date'] ?? '-'}'),
+        const SizedBox(height: 20),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                _infoRow(Icons.person_outline, 'Petani',
+                    farmerProfile?['nama']?.toString() ?? '-'),
+                _infoRow(Icons.storefront_outlined, 'Pembeli',
+                    buyerProfile?['nama_institusi']?.toString() ?? '-'),
+                _infoRow(Icons.scale_outlined, 'Jumlah',
+                    '${tx['agreed_quantity']} ${listing?['unit'] ?? 'kg'}'),
+                _infoRow(Icons.calendar_today_outlined, 'Estimasi kirim',
+                    tx['promised_delivery_date']?.toString() ?? '-',
+                    isLast: true),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Card(
+          color: const Color(0xFFEFF6F0),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Total',
+                    style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  formatRupiah(total),
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1B5E32),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         const SizedBox(height: 24),
         if (role == 'buyer' && status == 'pending')
-          ElevatedButton(
+          FilledButton(
             onPressed: _isRejecting ? null : _confirmReject,
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),
             child: _isRejecting
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
+                ? const _BtnSpinner()
                 : const Text('Tolak Transaksi'),
           ),
         if (role == 'buyer' && status == 'fulfilled')
-          ElevatedButton(
+          FilledButton(
             onPressed: _openRecurringOrderSheet,
             child: const Text('Jadikan Recurring Order'),
           ),
         if (role == 'farmer' && status == 'pending')
-          ElevatedButton(
+          FilledButton(
             onPressed: _isFulfilling ? null : _openFulfillSheet,
             child: _isFulfilling
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
+                ? const _BtnSpinner()
                 : const Text('Tandai Terkirim'),
           ),
       ],
+    );
+  }
+
+  Widget _infoRow(IconData icon, String label, String value,
+      {bool isLast = false}) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 14),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: Colors.grey.shade600),
+          const SizedBox(width: 10),
+          Text(label, style: TextStyle(color: Colors.grey.shade700)),
+          const Spacer(),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BtnSpinner extends StatelessWidget {
+  const _BtnSpinner();
+  @override
+  Widget build(BuildContext context) => const SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+      );
+}
+
+class _StatusChip extends StatelessWidget {
+  final String status;
+  const _StatusChip({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, color) = switch (status) {
+      'pending' => ('Menunggu', const Color(0xFFB26A00)),
+      'fulfilled' => ('Terkirim', const Color(0xFF1B5E32)),
+      'rejected' => ('Ditolak', const Color(0xFFC62828)),
+      _ => (status, Colors.grey.shade700),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 13),
+      ),
     );
   }
 }

@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/app_theme.dart';
+import '../../../core/format.dart';
 import '../data/negotiation_repository.dart';
 
 class ChatInboxScreen extends StatefulWidget {
@@ -120,7 +122,7 @@ class _InboxItem extends StatelessWidget {
         : buyerProfile['nama_institusi']?.toString() ?? '';
 
     final listingTitle = listing['title']?.toString() ?? '';
-    final harga = listing['harga_per_unit']?.toString() ?? '0';
+    final harga = (listing['harga_per_unit'] as num?) ?? 0;
     final unit = listing['unit']?.toString() ?? 'kg';
 
     return Card(
@@ -185,9 +187,9 @@ class _InboxItem extends StatelessWidget {
                         overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 4),
                     Text(
-                      'Rp $harga/$unit',
-                      style: TextStyle(
-                        color: Colors.green.shade700,
+                      '${formatRupiah(harga)}/$unit',
+                      style: const TextStyle(
+                        color: AppTheme.brandGreen,
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),

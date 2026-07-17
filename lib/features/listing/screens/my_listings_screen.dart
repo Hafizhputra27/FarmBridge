@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/format.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../data/listing_repository.dart';
 
@@ -164,7 +165,7 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen> {
               subtitle: Text(
                 isArchived
                     ? 'Diarsipkan'
-                    : 'Rp ${item['harga_per_unit']}/${item['unit'] ?? 'kg'} · ${item['quantity_available']} tersedia',
+                    : '${formatRupiah((item['harga_per_unit'] as num?) ?? 0)}/${item['unit'] ?? 'kg'} · ${item['quantity_available']} tersedia',
               ),
               trailing: isArchived
                   ? null

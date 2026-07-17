@@ -1,6 +1,8 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/format.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../data/buy_now_repository.dart';
 import '../data/listing_repository.dart';
@@ -142,27 +144,107 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
     final listing = _listing!;
     final farmerProfile = listing['farmer_profiles'] as Map<String, dynamic>?;
     final available = (listing['quantity_available'] as num).toInt();
+    final unit = listing['unit']?.toString() ?? 'kg';
+    final price = (listing['harga_per_unit'] as num?) ?? 0;
+    final fotoUrl = listing['foto_url']?.toString();
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.zero,
       children: [
-        Text(
-          listing['title']?.toString() ??
-              listing['category']?.toString() ??
-              '-',
-          style: Theme.of(context).textTheme.titleLarge,
+        AspectRatio(
+          aspectRatio: 16 / 10,
+          child: fotoUrl != null
+              ? CachedNetworkImage(
+                  imageUrl: fotoUrl,
+                  fit: BoxFit.cover,
+                  placeholder: (_, _) => Container(color: Colors.grey.shade200),
+                  errorWidget: (_, _, _) => Container(
+                    color: Colors.grey.shade200,
+                    child: const Icon(Icons.image_not_supported,
+                        color: Colors.grey, size: 48),
+                  ),
+                )
+              : Container(
+                  color: Colors.grey.shade200,
+                  child: const Icon(Icons.image, size: 64, color: Colors.grey),
+                ),
         ),
-        const SizedBox(height: 8),
-        Text('Rp${listing['harga_per_unit']}/${listing['unit'] ?? 'kg'}'),
-        Text('Stok tersedia: $available'),
-        Text('Petani: ${farmerProfile?['nama'] ?? '-'}'),
-        Text('Lokasi: ${farmerProfile?['lokasi'] ?? '-'}'),
-        const SizedBox(height: 24),
-        ElevatedButton(
-          onPressed: available > 0 ? _openBuyNowSheet : null,
-          child: Text(available > 0 ? 'Beli Sekarang' : 'Stok Habis'),
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                listing['title']?.toString() ??
+                    listing['category']?.toString() ??
+                    '-',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 6),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    formatRupiah(price),
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1B5E32),
+                    ),
+                  ),
+                  Text('/$unit',
+                      style: TextStyle(color: Colors.grey.shade600)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      _infoRow(Icons.inventory_2_outlined, 'Stok tersedia',
+                          '$available $unit'),
+                      _infoRow(Icons.person_outline, 'Petani',
+                          farmerProfile?['nama']?.toString() ?? '-'),
+                      _infoRow(Icons.location_on_outlined, 'Lokasi',
+                          farmerProfile?['lokasi']?.toString() ?? '-',
+                          isLast: true),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: available > 0 ? _openBuyNowSheet : null,
+                child: Text(available > 0 ? 'Beli Sekarang' : 'Stok Habis'),
+              ),
+            ],
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _infoRow(IconData icon, String label, String value,
+      {bool isLast = false}) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 14),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: Colors.grey.shade600),
+          const SizedBox(width: 10),
+          Text(label, style: TextStyle(color: Colors.grey.shade700)),
+          const Spacer(),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -14,7 +14,7 @@ class ListingRepository {
   }) async {
     var query = _client
         .from('listings')
-        .select('*, farmer_profiles(nama, lokasi)')
+        .select('*, farmer_profiles(nama, lokasi, verified)')
         .eq('status', 'active');
 
     if (category != null && category.isNotEmpty) {
@@ -36,7 +36,7 @@ class ListingRepository {
   Future<Map<String, dynamic>> getListingDetail(String id) {
     return _client
         .from('listings')
-        .select('*, farmer_profiles(nama, lokasi)')
+        .select('*, farmer_profiles(nama, lokasi, verified)')
         .eq('id', id)
         .single();
   }

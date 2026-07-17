@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/auth/providers/auth_provider.dart';
@@ -142,8 +141,8 @@ final buyerRoutes = <RouteBase>[
 final farmerRoutes = <RouteBase>[
   GoRoute(
     path: '/farmer',
-    builder: (context, state) =>
-        const PlaceholderScreen(title: 'Farmer Home'),
+    redirect: (context, state) =>
+        state.matchedLocation == '/farmer' ? '/farmer/listings' : null,
     routes: [
       GoRoute(
         path: 'listings',
@@ -165,16 +164,3 @@ final farmerRoutes = <RouteBase>[
     ],
   ),
 ];
-
-class PlaceholderScreen extends StatelessWidget {
-  final String title;
-  const PlaceholderScreen({super.key, required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(child: Text('$title — placeholder')),
-    );
-  }
-}
