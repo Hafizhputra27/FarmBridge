@@ -25,6 +25,7 @@ void main() {
                 'bio': 'Heirloom produce',
                 'verified': true,
               }),
+          farmerListingsProvider('farmer-1').overrideWith((ref) async => []),
         ],
         child: const MaterialApp(
           home: FarmerProfileScreen(farmerId: 'farmer-1'),
@@ -55,6 +56,7 @@ void main() {
               }),
           farmerIdentityProvider('farmer-2')
               .overrideWith((ref) async => null),
+          farmerListingsProvider('farmer-2').overrideWith((ref) async => []),
         ],
         child: const MaterialApp(
           home: FarmerProfileScreen(farmerId: 'farmer-2'),

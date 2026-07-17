@@ -45,3 +45,17 @@ final buyerIdentityProvider =
       .eq('id', buyerProfileId)
       .maybeSingle();
 });
+
+// Listing aktif milik farmer — untuk section "Listing Aktif" di profil petani
+// (sesuai desain ke-6). farmerId = users.id.
+final farmerListingsProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, String>((ref, farmerUserId) async {
+  final rows = await Supabase.instance.client
+      .from('listings')
+      .select('id, title, category, harga_per_unit, unit, foto_url')
+      .eq('farmer_id', farmerUserId)
+      .eq('status', 'active')
+      .order('created_at', ascending: false)
+      .limit(10);
+  return List<Map<String, dynamic>>.from(rows);
+});

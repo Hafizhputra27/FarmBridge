@@ -1,7 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/app_theme.dart';
+import '../../../core/format.dart';
 import '../../../core/widgets/metric_bar.dart';
 import '../providers/profile_metrics_provider.dart';
 import '../widgets/profile_header.dart';
@@ -21,6 +23,35 @@ class FarmerProfileScreen extends ConsumerWidget {
               bio: id['bio']?.toString(),
               verified: id['verified'] == true,
             ),
+      orElse: () => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _activeListings(BuildContext context, WidgetRef ref) {
+    final listings = ref.watch(farmerListingsProvider(farmerId));
+    return listings.maybeWhen(
+      data: (items) {
+        if (items.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 24),
+            Text('Listing Aktif',
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 196,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: items.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 12),
+                itemBuilder: (_, i) =>
+                    _MiniListingCard(item: items[i]),
+              ),
+            ),
+          ],
+        );
+      },
       orElse: () => const SizedBox.shrink(),
     );
   }
@@ -61,6 +92,7 @@ class FarmerProfileScreen extends ConsumerWidget {
                     textAlign: TextAlign.center,
                   ),
                 ),
+                _activeListings(context, ref),
               ],
             );
           }
@@ -126,9 +158,76 @@ class FarmerProfileScreen extends ConsumerWidget {
                 'Berdasarkan ${data['window_days']} hari terakhir',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
+              _activeListings(context, ref),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _MiniListingCard extends StatelessWidget {
+  final Map<String, dynamic> item;
+  const _MiniListingCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final foto = item['foto_url']?.toString();
+    final title = item['title']?.toString() ??
+        item['category']?.toString() ??
+        '-';
+    final price = (item['harga_per_unit'] as num?) ?? 0;
+    final unit = item['unit']?.toString() ?? 'kg';
+
+    return GestureDetector(
+      onTap: () => context.push('/listing/${item['id']}'),
+      child: SizedBox(
+        width: 150,
+        child: Card(
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AspectRatio(
+                aspectRatio: 3 / 2,
+                child: foto != null
+                    ? CachedNetworkImage(
+                        imageUrl: foto,
+                        fit: BoxFit.cover,
+                        placeholder: (_, _) =>
+                            Container(color: AppTheme.sage),
+                        errorWidget: (_, _, _) => Container(
+                            color: AppTheme.sage,
+                            child: const Icon(Icons.eco,
+                                color: AppTheme.leaf)),
+                      )
+                    : Container(
+                        color: AppTheme.sage,
+                        child: const Icon(Icons.eco, color: AppTheme.leaf)),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 13)),
+                    const SizedBox(height: 4),
+                    Text('${formatRupiah(price)}/$unit',
+                        style: const TextStyle(
+                            color: AppTheme.brandGreen,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
