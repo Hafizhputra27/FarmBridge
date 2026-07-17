@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/app_theme.dart';
+import '../../../core/format.dart';
 import '../data/listing_repository.dart';
 
 class SearchFilterScreen extends StatefulWidget {
@@ -13,7 +15,9 @@ class SearchFilterScreen extends StatefulWidget {
 class _SearchFilterScreenState extends State<SearchFilterScreen> {
   final _repo = ListingRepository();
 
-  final _categories = ['Semua', 'Beras', 'Cabai Merah', 'Bawang Merah', 'Tomat', 'Jagung', 'Kentang'];
+  // Kategori mengikuti data listing aktual (Cabai/Sayuran/Umbi) — kalau
+  // hardcode kategori yang tidak ada di data, filter selalu balik kosong.
+  final _categories = ['Semua', 'Cabai', 'Sayuran', 'Umbi'];
   final _regions = ['Semua', 'Jawa Barat', 'Jawa Tengah', 'Jawa Timur'];
 
   String _selectedCategory = 'Semua';
@@ -22,6 +26,12 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
 
   List<Map<String, dynamic>> _results = [];
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _applyFilter(); // tampilkan semua listing saat layar dibuka
+  }
 
   Future<void> _applyFilter() async {
     setState(() => _isLoading = true);
@@ -94,7 +104,7 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
                       onSelected: (selected) {
                         setState(() => _selectedCategory = selected ? cat : 'Semua');
                       },
-                      selectedColor: Colors.green.shade100,
+                      selectedColor: AppTheme.sage,
                     );
                   }).toList(),
                 ),
@@ -111,7 +121,7 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
                       onSelected: (selected) {
                         setState(() => _selectedRegion = selected ? reg : 'Semua');
                       },
-                      selectedColor: Colors.green.shade100,
+                      selectedColor: AppTheme.sage,
                     );
                   }).toList(),
                 ),
@@ -141,14 +151,10 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
                 const SizedBox(height: 8),
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton.icon(
+                  child: FilledButton.icon(
                     onPressed: _isLoading ? null : _applyFilter,
                     icon: const Icon(Icons.search, size: 18),
                     label: const Text('Terapkan Filter'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade700,
-                      foregroundColor: Colors.white,
-                    ),
                   ),
                 ),
               ],
@@ -210,15 +216,15 @@ class _ResultCard extends StatelessWidget {
 
     final fotoUrl = listing['foto_url']?.toString();
     final title = listing['title']?.toString() ?? listing['category']?.toString() ?? '';
-    final harga = listing['harga_per_unit']?.toString() ?? '0';
+    final harga = (listing['harga_per_unit'] as num?) ?? 0;
     final unit = listing['unit']?.toString() ?? 'kg';
-    final farmerId = listing['farmer_id']?.toString() ?? '';
+    final listingId = listing['id']?.toString() ?? '';
     final namaFarmer = farmerProfile?['nama']?.toString() ?? '';
 
     return GestureDetector(
       onTap: () {
-        if (farmerId.isNotEmpty) {
-          context.push('/farmer-profile/$farmerId');
+        if (listingId.isNotEmpty) {
+          context.push('/listing/$listingId');
         }
       },
       child: Card(
@@ -255,8 +261,8 @@ class _ResultCard extends StatelessWidget {
                     Text(title, maxLines: 2, overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                     const Spacer(),
-                    Text('Rp $harga/$unit',
-                      style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.bold, fontSize: 13)),
+                    Text('${formatRupiah(harga)}/$unit',
+                      style: const TextStyle(color: AppTheme.brandGreen, fontWeight: FontWeight.bold, fontSize: 13)),
                     if (namaFarmer.isNotEmpty) ...[
                       const SizedBox(height: 2),
                       Text(namaFarmer,

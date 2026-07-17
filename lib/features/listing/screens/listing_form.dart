@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
+import '../../../core/app_theme.dart';
 import '../../auth/providers/auth_provider.dart';
 
 class ListingFormState {
@@ -70,7 +71,8 @@ class ListingForm extends ConsumerStatefulWidget {
 class _ListingFormState extends ConsumerState<ListingForm> {
   final _picker = ImagePicker();
   final _unitOptions = ['kg', 'head', 'flat', 'box', 'ikat'];
-  final _categories = ['Beras', 'Cabai Merah', 'Bawang Merah', 'Tomat', 'Jagung', 'Kentang'];
+  // Taksonomi kategori konsisten dengan feed & search (Cabai/Sayuran/Umbi).
+  final _categories = ['Cabai', 'Sayuran', 'Umbi'];
   final _regions = ['Jawa Barat', 'Jawa Tengah', 'Jawa Timur'];
 
   late ListingFormState _s;
@@ -243,7 +245,7 @@ class _ListingFormState extends ConsumerState<ListingForm> {
                     ? _validateAndSubmit
                     : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green.shade700,
+              backgroundColor: AppTheme.brandGreen,
               foregroundColor: Colors.white,
               disabledBackgroundColor: Colors.grey.shade300,
               shape: RoundedRectangleBorder(
@@ -359,7 +361,7 @@ class _ListingFormState extends ConsumerState<ListingForm> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: error != null ? Colors.red : Colors.green, width: 2),
+          borderSide: BorderSide(color: error != null ? Colors.red : AppTheme.brandGreen, width: 2),
         ),
         errorText: error,
       ),
@@ -392,7 +394,7 @@ class _ListingFormState extends ConsumerState<ListingForm> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: error != null ? Colors.red : Colors.green, width: 2),
+          borderSide: BorderSide(color: error != null ? Colors.red : AppTheme.brandGreen, width: 2),
         ),
         errorText: error,
       ),
@@ -419,7 +421,7 @@ class _ListingFormState extends ConsumerState<ListingForm> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: _s.priceError ? Colors.red : Colors.green, width: 2),
+                borderSide: BorderSide(color: _s.priceError ? Colors.red : AppTheme.brandGreen, width: 2),
               ),
               errorText: _s.priceError ? 'Harga harus > 0' : null,
             ),
