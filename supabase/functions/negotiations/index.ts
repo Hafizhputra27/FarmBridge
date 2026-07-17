@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { getRecommendedPrice } from "../_shared/price-recommendation.ts";
 import { lockInventoryOnAcceptWithQuantity } from "../_shared/inventory-locking.ts";
+import { sendPush } from "../_shared/fcm.ts";
 
 function parsePath(path: string): { action: string; negotiationId?: string } {
   const parts = path.replace(/^\/negotiations\/?/, "").split("/").filter(Boolean);
@@ -55,6 +56,20 @@ async function handleCreate(supabase: ReturnType<typeof createClient>, body: Rec
 
   if (negErr) throw new Error("Gagal membuat negosiasi: " + negErr.message);
 
+  try {
+    const { data: farmer } = await supabase.from("users").select("device_token").eq("id", listing.farmer_id).single();
+    if (farmer?.device_token) {
+      await sendPush({
+        deviceToken: farmer.device_token,
+        title: "Negosiasi baru",
+        body: `Ada tawaran baru untuk listing ${listing.title ?? listing.category ?? "Anda"}`,
+        deepLink: `/negosiasi/${negotiation.id}`,
+      });
+    }
+  } catch {
+    // push gagal tidak boleh gagalkan pembuatan negosiasi
+  }
+
   return new Response(JSON.stringify({ negotiation_id: negotiation.id, recommended_price: priceResult.recommended_price, avg_price: priceResult.avg_price, min_price: priceResult.min_price, max_price: priceResult.max_price, status: negotiation.status, expires_at: negotiation.expires_at }), { status: 200, headers: { "Content-Type": "application/json" } });
 }
 
@@ -99,6 +114,33 @@ async function handleMessages(supabase: ReturnType<typeof createClient>, negotia
   const updateData: Record<string, unknown> = { status: newStatus };
   if (action_type === "counter" && offer_price != null) { updateData.current_offer_price = Number(offer_price); updateData.counter_count = (neg.counter_count ?? 0) + 1; }
   await supabase.from("negotiations").update(updateData).eq("id", negotiationId);
+
+  try {
+    const recipientId = sender_id === neg.buyer_id ? neg.farmer_id : neg.buyer_id;
+    const { data: recipient } = await supabase.from("users").select("device_token").eq("id", recipientId).single();
+    if (recipient?.device_token) {
+      const titles: Record<string, string> = {
+        message: "Pesan baru",
+        counter: "Tawaran baru",
+        accept: "Negosiasi diterima",
+        decline: "Negosiasi ditolak",
+      };
+      const bodies: Record<string, string> = {
+        message: message_text ? String(message_text) : "Ada pesan baru di negosiasi Anda",
+        counter: `Tawaran baru: Rp${offer_price}`,
+        accept: "Tawaran Anda diterima — transaksi telah dibuat",
+        decline: "Negosiasi ditolak oleh pihak lain",
+      };
+      await sendPush({
+        deviceToken: recipient.device_token,
+        title: titles[action_type as string] ?? "Update negosiasi",
+        body: bodies[action_type as string] ?? "Ada update di negosiasi Anda",
+        deepLink: `/negosiasi/${negotiationId}`,
+      });
+    }
+  } catch {
+    // push gagal tidak boleh gagalkan response utama
+  }
 
   return new Response(JSON.stringify({ message_id: msg.id, negotiation_status: newStatus, transaction_id: transactionId ?? null }), { status: 200, headers: { "Content-Type": "application/json" } });
 }

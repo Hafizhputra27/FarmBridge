@@ -38,4 +38,26 @@ class TransactionRepository {
       throw Exception(data['error']);
     }
   }
+
+  Future<void> fulfill(
+    String transactionId, {
+    required int deliveredQuantity,
+    required DateTime actualDeliveryDate,
+  }) async {
+    final dateStr = '${actualDeliveryDate.year}-'
+        '${actualDeliveryDate.month.toString().padLeft(2, '0')}-'
+        '${actualDeliveryDate.day.toString().padLeft(2, '0')}';
+    final res = await _client.functions.invoke(
+      'transactions-fulfill/fulfill/$transactionId',
+      method: HttpMethod.post,
+      body: {
+        'delivered_quantity': deliveredQuantity,
+        'actual_delivery_date': dateStr,
+      },
+    );
+    final data = res.data as Map<String, dynamic>?;
+    if (data != null && data['error'] != null) {
+      throw Exception(data['error']);
+    }
+  }
 }

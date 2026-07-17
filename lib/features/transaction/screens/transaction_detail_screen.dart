@@ -18,6 +18,7 @@ class _TransactionDetailScreenState
   Map<String, dynamic>? _tx;
   bool _isLoading = true;
   bool _isRejecting = false;
+  bool _isFulfilling = false;
   String? _error;
 
   @override
@@ -80,6 +81,135 @@ class _TransactionDetailScreenState
     }
   }
 
+  Future<void> _openFulfillSheet() async {
+    final tx = _tx!;
+    final quantityController = TextEditingController(
+      text: tx['agreed_quantity'].toString(),
+    );
+    DateTime selectedDate = DateTime.now();
+    String? sheetError;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Tandai Terkirim',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: quantityController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Kuantitas terkirim',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Tanggal kirim'),
+                    subtitle: Text(
+                      '${selectedDate.year}-'
+                      '${selectedDate.month.toString().padLeft(2, '0')}-'
+                      '${selectedDate.day.toString().padLeft(2, '0')}',
+                    ),
+                    trailing: const Icon(Icons.calendar_today, size: 18),
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: ctx,
+                        initialDate: selectedDate,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2100),
+                      );
+                      if (picked != null) {
+                        setSheetState(() => selectedDate = picked);
+                      }
+                    },
+                  ),
+                  if (sheetError != null) ...[
+                    const SizedBox(height: 8),
+                    Text(sheetError!, style: const TextStyle(color: Colors.red)),
+                  ],
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      final qty = int.tryParse(quantityController.text);
+                      if (qty == null || qty <= 0) {
+                        setSheetState(
+                          () => sheetError = 'Kuantitas harus lebih dari 0',
+                        );
+                        return;
+                      }
+                      Navigator.pop(ctx);
+                      _confirmFulfill(qty, selectedDate);
+                    },
+                    child: const Text('Lanjutkan'),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmFulfill(int deliveredQuantity, DateTime deliveryDate) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Tandai Terkirim?'),
+        content: const Text(
+          'Data tidak bisa diubah setelah disimpan. Trust score petani '
+          'akan diperbarui otomatis berdasarkan kuantitas & tanggal ini.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Ya, Tandai Terkirim'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _isFulfilling = true);
+    try {
+      await _repo.fulfill(
+        widget.transactionId,
+        deliveredQuantity: deliveredQuantity,
+        actualDeliveryDate: deliveryDate,
+      );
+      await _load();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menandai terkirim: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isFulfilling = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final role = ref.watch(currentUserRoleProvider);
@@ -134,16 +264,16 @@ class _TransactionDetailScreenState
                   )
                 : const Text('Tolak Transaksi'),
           ),
-        if (role == 'farmer')
+        if (role == 'farmer' && status == 'pending')
           ElevatedButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Fitur "Tandai Terkirim" tersedia Sprint 8'),
-                ),
-              );
-            },
-            child: const Text('Tandai Terkirim'),
+            onPressed: _isFulfilling ? null : _openFulfillSheet,
+            child: _isFulfilling
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Tandai Terkirim'),
           ),
       ],
     );
