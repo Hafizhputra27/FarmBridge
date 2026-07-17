@@ -1,22 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-async function lockInventory(supabase, negotiationId, quantity, farmerId, buyerId, price, listingId) {
-  const { data: list } = await supabase.from("listings").select("quantity_available").eq("id", listingId).single();
-  if (!list) return { success: false, error: "Listing tidak ditemukan" };
-  const currentQty = Number(list.quantity_available);
-  if (currentQty < quantity) return { success: false, error: "Stok tidak mencukupi (first-accepted-wins)" };
-  const { error: deductErr } = await supabase.from("listings").update({ quantity_available: currentQty - quantity }).eq("id", listingId);
-  if (deductErr) return { success: false, error: "Gagal mengurangi stok" };
-  const totalAmount = quantity * Number(price);
-  const promised = new Date(); promised.setDate(promised.getDate() + 7);
-  const { data: tx, error: txErr } = await supabase.from("transactions").insert({
-    negotiation_id: negotiationId, farmer_id: farmerId, buyer_id: buyerId,
-    status: "pending", agreed_quantity: quantity, total_amount: totalAmount,
-    promised_delivery_date: promised.toISOString().slice(0, 10)
-  }).select("id").single();
-  if (txErr) { await supabase.from("listings").update({ quantity_available: currentQty }).eq("id", listingId); return { success: false, error: "Gagal buat transaksi" }; }
-  return { success: true, transaction_id: tx.id };
-}
+import { lockInventoryOnAcceptWithQuantity } from "../_shared/inventory-locking.ts";
 
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") {
@@ -98,12 +81,8 @@ Deno.serve(async (req: Request) => {
 
     if (negErr) throw new Error("Gagal buat negotiation: " + negErr.message);
 
-    // 3. Lock inventory + buat transaction (FG-35)
-    const lockResult = await lockInventory(
-      supabase, negotiation.id, quantity,
-      listing.farmer_id, buyer_id,
-      listing.harga_per_unit, listingId,
-    );
+    // 3. Lock inventory + buat transaction (FG-35) — reuse shared, guarded (fix FG-46 race condition)
+    const lockResult = await lockInventoryOnAcceptWithQuantity(supabase, negotiation.id, quantity);
 
     if (!lockResult.success) {
       // Rollback negotiation

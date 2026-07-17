@@ -57,14 +57,20 @@ export async function lockInventoryOnAcceptWithQuantity(
     return { success: false, error: "Stok tidak mencukupi — transaksi lain mungkin sudah mengambil (first-accepted-wins)" };
   }
 
+  // .select().single() wajib -- tanpa itu PostgREST balas sukses (204) walau
+  // 0 baris cocok dengan guard .eq("quantity_available", currentQty), jadi
+  // guard-nya jadi dekoratif (request kalah race tetap lolos ke tahap insert
+  // transaksi). .single() memaksa error kalau 0 baris ter-update.
   const { error: deductErr } = await supabase
     .from("listings")
     .update({ quantity_available: currentQty - quantity })
     .eq("id", neg.listing_id)
-    .eq("quantity_available", currentQty); // optimistic concurrency guard
+    .eq("quantity_available", currentQty) // optimistic concurrency guard
+    .select()
+    .single();
 
   if (deductErr) {
-    return { success: false, error: "Gagal mengurangi stok: " + deductErr.message };
+    return { success: false, error: "Stok tidak mencukupi — transaksi lain mungkin sudah mengambil (first-accepted-wins)" };
   }
 
   // 3. Buat transaction PENDING
@@ -169,11 +175,14 @@ export async function lockInventoryForRecurringCycle(
     return { success: false, error: "Stok tidak mencukupi" };
   }
 
+  // .select().single() wajib -- lihat catatan di lockInventoryOnAcceptWithQuantity.
   const { error: deductErr } = await supabase
     .from("listings")
     .update({ quantity_available: currentQty - quantity })
     .eq("id", recurringOrder.listing_id)
-    .eq("quantity_available", currentQty); // optimistic concurrency guard
+    .eq("quantity_available", currentQty) // optimistic concurrency guard
+    .select()
+    .single();
 
   if (deductErr) {
     return { success: false, error: "Gagal mengurangi stok: " + deductErr.message };
